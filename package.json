@@ -1,0 +1,14 @@
+{
+  "name": "connectra-telecom",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Connectra Telecom website — React (Vite + Tailwind v4) frontend and Node/Express backend, deployed as one service",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install --include=dev",
+    "build": "npm run install:all && npm --prefix frontend run build",
+    "start": "node backend/src/server.js",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev"
+  }
+}
