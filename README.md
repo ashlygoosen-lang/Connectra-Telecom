@@ -42,14 +42,16 @@ Demo account: `demo@connectra.africa` / `Connectra2026!` (set `SEED_DEMO=false` 
 | GET | `/api/orders/:ref?email=` | Order tracking |
 | POST | `/api/auth/register`, `/api/auth/login` | Returns a bearer token |
 | GET | `/api/account/me` | Profile, usage, bill, orders (auth) |
-| POST | `/api/account/data-topup` | `{ gb: 1 \| 5 \| 10 \| 20 }` (auth) |
+| POST | `/api/account/data-topup` | `{ gb: 1 \| 5 \| 10 \| 20 }` → R85 / R229 / R349 / R499 added to the next bill (auth) |
 | GET | `/api/support/topics`, `/api/support/articles?q=&topic=` | Help centre search |
 | POST | `/api/support/tickets` | `{ name, email, topic, message }` |
 | GET | `/api/admin/summary` | Leads, orders, tickets — header `x-admin-key: $ADMIN_KEY` |
 
 Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DIR/db.json`).
 
-**Still to connect for production:** a payment gateway (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
+**Currency:** all prices and payments are South African Rand (ZAR), VAT inclusive, formatted the South African way (R1 099 / R1 099,00). Orders store `currency: "ZAR"`.
+
+**Still to connect for production:** a South African payment gateway such as PayFast, Yoco, Peach Payments or Paystack, charging in ZAR (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
 
 ## Animation system
 

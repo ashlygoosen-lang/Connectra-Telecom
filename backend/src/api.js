@@ -11,6 +11,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const id = (prefix) => `${prefix}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
 const bad = (res, message, status = 400) => res.status(status).json({ ok: false, error: message })
+// Once-off data bundles, ZAR (VAT incl.), added to the next bill.
+const DATA_BUNDLES = { 1: 85, 5: 229, 10: 349, 20: 499 }
 const publicUser = ({ passwordHash, ...u }) => u
 
 // Simple fixed-window rate limiter for write endpoints.
@@ -72,7 +74,7 @@ api.get('/faqs', (_req, res) => res.json({ ok: true, faqs }))
 
 api.get('/stats', (_req, res) => {
   const d = db()
-  res.json({ ok: true, customers: 500000 + d.users.length + d.orders.length, rating: 4.8, coverage: 98, maxSpeedMbps: 1000 })
+  res.json({ ok: true, currency: 'ZAR', customers: 500000 + d.users.length + d.orders.length, rating: 4.8, coverage: 98, maxSpeedMbps: 1000 })
 })
 
 // ---------- coverage ----------
@@ -146,7 +148,7 @@ api.post('/orders', limit(10), (req, res) => {
     const term = Number(b.term) === 24 ? 24 : 36
     const storage = phone.storage.find(s => s.size === b.storage) || phone.storage[0]
     const color = phone.colors.find(x => x.name === b.color) || phone.colors[0]
-    const monthly = phone.price + storage.add + (term === 24 ? 11 : 0)
+    const monthly = phone.price + storage.add + (term === 24 ? 200 : 0)
     item = { type: 'phone', phoneSlug: phone.slug, name: phone.name, brand: phone.brand, detail: `${color.name} · ${storage.size} · ${phone.data} 5G data · ${term} months`, color: color.name, storage: storage.size, term, monthly, upfront: phone.upfront }
   }
 
@@ -155,7 +157,8 @@ api.post('/orders', limit(10), (req, res) => {
   const order = {
     ref: id('CN'), status: 'received', item, customer,
     payment: { method: 'card', last4, status: 'pending-gateway' },
-    totals: { monthly: item.monthly, dueToday: item.upfront, delivery: 0 },
+    currency: 'ZAR',
+    totals: { monthly: item.monthly, dueToday: item.upfront, delivery: 0, vatIncluded: true },
     userId: session?.sub || null,
     createdAt: new Date().toISOString(),
   }
@@ -202,11 +205,13 @@ api.get('/account/me', requireUser, (req, res) => {
 })
 
 api.post('/account/data-topup', requireUser, limit(10), (req, res) => {
-  const gb = [1, 5, 10, 20].includes(Number(req.body?.gb)) ? Number(req.body.gb) : null
-  if (!gb) return bad(res, 'Choose a bundle of 1, 5, 10 or 20 GB.')
+  const gb = Number(req.body?.gb)
+  const price = DATA_BUNDLES[gb]
+  if (!price) return bad(res, 'Choose a bundle of 1, 5, 10 or 20 GB.')
   req.user.usage.totalGb += gb
+  req.user.bill.amount += price
   save()
-  res.json({ ok: true, usage: req.user.usage, message: `${gb}GB added to your plan.` })
+  res.json({ ok: true, usage: req.user.usage, bill: req.user.bill, charged: { amount: price, currency: 'ZAR' }, message: `${gb}GB added — R${price} will be on your next bill.` })
 })
 
 // ---------- support ----------
@@ -258,9 +263,9 @@ export function newUser({ name, email, password }) {
     id: crypto.randomUUID(), name, firstName: first, email,
     initials: name.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase(),
     passwordHash: hashPassword(password),
-    plan: { name: 'iPhone 16 Pro · 50GB', monthly: 38, renewsDay: 30 },
+    plan: { name: 'iPhone 16 Pro · 50GB', monthly: 1099, renewsDay: 30 },
     usage: { usedGb: 17.6, totalGb: 50 },
-    bill: { amount: 38, dueDay: 26, cardLast4: '4821', autopay: true },
+    bill: { amount: 1099, dueDay: 26, cardLast4: '4821', autopay: true, currency: 'ZAR' },
     createdAt: new Date().toISOString(),
   }
 }

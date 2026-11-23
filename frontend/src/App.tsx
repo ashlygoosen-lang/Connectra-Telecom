@@ -6,6 +6,10 @@ import type { Article, CoverageResult, InternetPlan, OrderSummary, Phone, User }
 import { fallbackPhones, fallbackPlans, faqs as faqData, supportTopics } from './data'
 import { reducedMotion, startMotion, transition } from './motion'
 
+// All prices are South African Rand, VAT inclusive (en-ZA formatting: R1 099 / R1 099,00).
+const zar = (n: number, cents = false) => `R${n.toLocaleString('en-ZA', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 })}`
+const DATA_BUNDLES: [number, number][] = [[1, 85], [5, 229], [10, 349], [20, 499]]
+
 type Page = 'home' | 'phones' | 'product' | 'internet' | 'voice' | 'checkout' | 'account' | 'support'
 type Route = { page: Page; slug?: string }
 type GoOptions = { slug?: string; anchor?: string }
@@ -37,7 +41,7 @@ const AppCtx = createContext<Ctx>(null!)
 const useApp = () => useContext(AppCtx)
 type Go = Ctx['go']
 
-const monthlyFor = (phone: Phone, storage: string, term: number) => phone.price + (phone.storage.find(s => s.size === storage)?.add ?? 0) + (term === 24 ? 11 : 0)
+const monthlyFor = (phone: Phone, storage: string, term: number) => phone.price + (phone.storage.find(s => s.size === storage)?.add ?? 0) + (term === 24 ? 200 : 0)
 
 function parseRoute(): Route {
   const [, page, slug] = location.hash.replace(/^#/, '').split('/')
@@ -205,7 +209,7 @@ function SectionHead({ eyebrow, title, text, action, onAction }: { eyebrow: stri
 function Home({ go }: { go: Go }) {
   const { phones, plans, setCart } = useApp()
   const [chip, setChip] = useState('All phones')
-  const row = phones.filter(p => chip === 'All phones' || (chip === 'Under $30/mo' ? p.price < 30 : p.brand === chip)).slice(0, 4)
+  const row = phones.filter(p => chip === 'All phones' || (chip === 'Under R700/mo' ? p.price < 700 : p.brand === chip)).slice(0, 4)
   const featured = phones.find(p => p.slug === 'iphone-16-pro') ?? phones[0]
   return <>
     <section className="hero">
@@ -233,9 +237,9 @@ function Home({ go }: { go: Go }) {
     <section className="section shell" id="deals">
       <SectionHead eyebrow="Limited-time offers" title="Deals that go further" text="More data, more speed, more value. Pick what works for you." action="View all deals" onAction={() => go('phones')}/>
       <div className="deal-grid">
-        <article className="deal-card dark"><span className="badge cyan">SIM ONLY</span><h3>Unlimited everything.</h3><p>Calls, texts and 5G data. No limits, no slowdowns.</p><div className="deal-price"><sup>$</sup><b>25</b><span>/mo</span></div><Button onClick={() => go('phones')}>Get this deal</Button><div className="deal-orbits"/></article>
-        <article className="deal-card featured"><span className="badge orange">MOST POPULAR</span><div className="mini-device"><PhoneMock color="#d9d6ce" small/></div><div><span className="muted-label">iPhone 16 Pro</span><h3>50GB 5G data</h3><div className="deal-price"><sup>$</sup><b>38</b><span>/mo</span></div><small>$49 upfront · 36 months</small><Button onClick={() => go('product', { slug: featured.slug })}>See deal <Icon name="arrow" size={17}/></Button></div></article>
-        <article className="deal-card fibre"><span className="badge blue">HOME FIBRE</span><Icon name="wifi" size={46}/><h3>200 Mbps Fibre</h3><p>Stream, work and play without buffering.</p><div className="deal-price"><sup>$</sup><b>36</b><span>/mo</span></div><Button variant="outline" onClick={() => go('internet')}>Check availability</Button></article>
+        <article className="deal-card dark"><span className="badge cyan">SIM ONLY</span><h3>Unlimited everything.</h3><p>Calls, texts and 5G data. No limits, no slowdowns.</p><div className="deal-price"><sup>R</sup><b>599</b><span>/mo</span></div><Button onClick={() => go('phones')}>Get this deal</Button><div className="deal-orbits"/></article>
+        <article className="deal-card featured"><span className="badge orange">MOST POPULAR</span><div className="mini-device"><PhoneMock color="#d9d6ce" small/></div><div><span className="muted-label">iPhone 16 Pro</span><h3>50GB 5G data</h3><div className="deal-price"><sup>R</sup><b>1 099</b><span>/mo</span></div><small>R999 upfront · 36 months</small><Button onClick={() => go('product', { slug: featured.slug })}>See deal <Icon name="arrow" size={17}/></Button></div></article>
+        <article className="deal-card fibre"><span className="badge blue">HOME FIBRE</span><Icon name="wifi" size={46}/><h3>200 Mbps Fibre</h3><p>Stream, work and play without buffering.</p><div className="deal-price"><sup>R</sup><b>899</b><span>/mo</span></div><Button variant="outline" onClick={() => go('internet')}>Check availability</Button></article>
       </div>
     </section>
 
@@ -251,13 +255,13 @@ function Home({ go }: { go: Go }) {
 
     <section className="section shell">
       <SectionHead eyebrow="Latest phones" title="Find your next phone" text="Top technology, flexible contracts and plans built around you." action="Shop all phones" onAction={() => go('phones')}/>
-      <div className="chips" role="tablist">{['All phones', 'Apple', 'Samsung', 'Google', 'Under $30/mo'].map(c => <button key={c} role="tab" aria-selected={chip === c} className={chip === c ? 'active' : ''} onClick={() => setChip(c)}>{c}</button>)}</div>
+      <div className="chips" role="tablist">{['All phones', 'Apple', 'Samsung', 'Google', 'Under R700/mo'].map(c => <button key={c} role="tab" aria-selected={chip === c} className={chip === c ? 'active' : ''} onClick={() => setChip(c)}>{c}</button>)}</div>
       <div className="phone-row">{row.map(phone => <PhoneCard phone={phone} key={phone.slug} go={go} badge={phone.badge}/>)}</div>
     </section>
 
     <section className="section internet-compare">
       <div className="shell"><SectionHead eyebrow="Home internet" title="Speed that fits your life" text="Every plan comes with unlimited usage, free installation and a Wi-Fi 6 router."/>
-        <div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">RECOMMENDED</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>${p.price}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited data</li><li><Icon name="check" size={17}/> Free Wi-Fi 6 router</li><li><Icon name="check" size={17}/> Free installation</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose plan</Button></article>)}</div>
+        <div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">RECOMMENDED</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>{zar(p.price)}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited data</li><li><Icon name="check" size={17}/> Free Wi-Fi 6 router</li><li><Icon name="check" size={17}/> Free installation</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose plan</Button></article>)}</div>
       </div>
     </section>
 
@@ -289,7 +293,7 @@ function Home({ go }: { go: Go }) {
 
 function PhoneCard({ phone, go, badge }: { phone: Phone; go: Go; badge?: string }) {
   const open = () => go('product', { slug: phone.slug })
-  return <article className="phone-card" onClick={open}><div className="phone-visual" style={{ background: phone.accent }}>{badge && <span className="badge blue">{badge}</span>}<PhoneMock color={phone.color}/></div><div className="phone-info"><span className="muted-label">{phone.brand}</span><h3>{phone.name}</h3><div className="phone-data"><Icon name="signal" size={17}/>{phone.data} 5G data</div><div className="phone-bottom"><div><small>From</small><b>${phone.price}<span>/mo</span></b></div><button aria-label={`View ${phone.name}`} onClick={e => { e.stopPropagation(); open() }}><Icon name="arrow" size={18}/></button></div></div></article>
+  return <article className="phone-card" onClick={open}><div className="phone-visual" style={{ background: phone.accent }}>{badge && <span className="badge blue">{badge}</span>}<PhoneMock color={phone.color}/></div><div className="phone-info"><span className="muted-label">{phone.brand}</span><h3>{phone.name}</h3><div className="phone-data"><Icon name="signal" size={17}/>{phone.data} 5G data</div><div className="phone-bottom"><div><small>From</small><b>{zar(phone.price)}<span>/mo</span></b></div><button aria-label={`View ${phone.name}`} onClick={e => { e.stopPropagation(); open() }}><Icon name="arrow" size={18}/></button></div></div></article>
 }
 
 function Faq() {
@@ -299,10 +303,10 @@ function Faq() {
 }
 
 // ---------- phones ----------
-const FILTERS: [string, string[]][] = [['Brand', ['Apple', 'Samsung', 'Google', 'Xiaomi']], ['Monthly cost', ['Under $25', '$25 – $35', '$35+']], ['Data allowance', ['25GB', '50GB', '100GB', 'Unlimited']], ['Features', ['5G ready', 'eSIM', 'Dual SIM']]]
+const FILTERS: [string, string[]][] = [['Brand', ['Apple', 'Samsung', 'Google', 'Xiaomi']], ['Monthly cost', ['Under R500', 'R500 – R900', 'R900+']], ['Data allowance', ['25GB', '50GB', '100GB', 'Unlimited']], ['Features', ['5G ready', 'eSIM', 'Dual SIM']]]
 function matches(p: Phone, group: string, value: string) {
   if (group === 'Brand') return p.brand === value
-  if (group === 'Monthly cost') return value === 'Under $25' ? p.price < 25 : value === '$35+' ? p.price >= 35 : p.price >= 25 && p.price < 35
+  if (group === 'Monthly cost') return value === 'Under R500' ? p.price < 500 : value === 'R900+' ? p.price >= 900 : p.price >= 500 && p.price < 900
   if (group === 'Data allowance') return p.data === value
   return p.features.includes(value)
 }
@@ -354,7 +358,7 @@ function ProductDetail({ phone, go, onAdd }: { phone: Phone; go: Go; onAdd: (c: 
       <Selector label="Storage" value={storage}><div className="option-row">{phone.storage.map(s => <button className={storage === s.size ? 'active' : ''} onClick={() => setStorage(s.size)} key={s.size}>{s.size}</button>)}</div></Selector>
       <Selector label="Contract term" value=""><div className="option-row">{[24, 36].map(t => <button className={term === t ? 'active' : ''} onClick={() => setTerm(t)} key={t}>{t} months{t === 36 && <small>Lowest monthly</small>}</button>)}</div></Selector>
       <div className="included"><b>Your plan includes</b><div><span><Icon name="signal"/> {phone.data} 5G data</span><span><Icon name="phone"/> Unlimited calls & texts</span></div></div>
-      <div className="summary"><div><span>Monthly payment</span><b key={monthly} className="price-tick">${monthly}<small>/mo</small></b><small>${phone.upfront} upfront · Includes device + plan</small></div><Button onClick={() => onAdd({ type: 'phone', slug: phone.slug, color, storage, term })}><Icon name="cart" size={18}/> Add to cart</Button></div>
+      <div className="summary"><div><span>Monthly payment</span><b key={monthly} className="price-tick">{zar(monthly)}<small>/mo</small></b><small>{phone.upfront ? `${zar(phone.upfront)} upfront` : 'No upfront cost'} · Includes device + plan</small></div><Button onClick={() => onAdd({ type: 'phone', slug: phone.slug, color, storage, term })}><Icon name="cart" size={18}/> Add to cart</Button></div>
     </div>
   </div></main>
 }
@@ -364,7 +368,7 @@ function Selector({ label, value, children }: { label: string; value: string; ch
 // ---------- internet & voice ----------
 function InternetPage({ go }: { go: Go }) {
   const { plans, setCart } = useApp()
-  return <><PageHero eyebrow="Home internet" title="Fast feels different." text="Reliable fibre, 5G and LTE internet for every home, every stream and every big idea." icon="wifi"/><section className="availability" id="availability"><div className="shell"><div><span className="eyebrow">Find your connection</span><h2>What's available at your address?</h2></div><SearchBar button="Check availability"/></div></section><section className="section shell"><SectionHead eyebrow="Choose your speed" title="Plans made for real life" text="Unlimited data, clear monthly pricing and everything you need to get online."/><div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">BEST VALUE</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>${p.price}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited usage</li><li><Icon name="check" size={17}/> Wi-Fi 6 router included</li><li><Icon name="check" size={17}/> Free setup</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose this plan</Button></article>)}</div></section><section className="section speed-guide"><div className="shell"><div><span className="eyebrow">Speed, explained</span><h2>How fast is fast enough?</h2><p>Your ideal speed depends on how many people and devices share your connection.</p></div><div className="speed-bars">{[['50 Mbps', 'Browsing & HD streaming', '45%'], ['200 Mbps', 'Families & 4K streaming', '72%'], ['500 Mbps', 'Gaming & connected homes', '100%']].map(([s, t, w]) => <article key={s}><div><b>{s}</b><span>{t}</span></div><i><em style={{ width: w }}/></i></article>)}</div></div></section><CtaBand title="A better Wi-Fi experience, included." text="Every fibre plan comes with a powerful Wi-Fi 6 router to cover more of your home." button="Check my address" onClick={() => go('internet', { anchor: 'availability' })}/></>
+  return <><PageHero eyebrow="Home internet" title="Fast feels different." text="Reliable fibre, 5G and LTE internet for every home, every stream and every big idea." icon="wifi"/><section className="availability" id="availability"><div className="shell"><div><span className="eyebrow">Find your connection</span><h2>What's available at your address?</h2></div><SearchBar button="Check availability"/></div></section><section className="section shell"><SectionHead eyebrow="Choose your speed" title="Plans made for real life" text="Unlimited data, clear monthly pricing and everything you need to get online."/><div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">BEST VALUE</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>{zar(p.price)}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited usage</li><li><Icon name="check" size={17}/> Wi-Fi 6 router included</li><li><Icon name="check" size={17}/> Free setup</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose this plan</Button></article>)}</div></section><section className="section speed-guide"><div className="shell"><div><span className="eyebrow">Speed, explained</span><h2>How fast is fast enough?</h2><p>Your ideal speed depends on how many people and devices share your connection.</p></div><div className="speed-bars">{[['50 Mbps', 'Browsing & HD streaming', '45%'], ['200 Mbps', 'Families & 4K streaming', '72%'], ['500 Mbps', 'Gaming & connected homes', '100%']].map(([s, t, w]) => <article key={s}><div><b>{s}</b><span>{t}</span></div><i><em style={{ width: w }}/></i></article>)}</div></div></section><CtaBand title="A better Wi-Fi experience, included." text="Every fibre plan comes with a powerful Wi-Fi 6 router to cover more of your home." button="Check my address" onClick={() => go('internet', { anchor: 'availability' })}/></>
 }
 
 function VoicePage() {
@@ -444,14 +448,14 @@ function Checkout({ go }: { go: Go }) {
       {placed ? <div className="step-panel"><div className="success-check"><Icon name="check" size={38}/></div><span className="eyebrow">Order confirmed</span><h1>You're connected, {details.firstName}!</h1><p>Your order reference is <b>{placed.ref}</b>. We've emailed the details to {details.email}. Delivery is free and usually takes 1–2 working days.</p><div className="checkout-nav"><Button variant="ghost" onClick={() => go('home')}>Back to home</Button><Button onClick={() => go('account')}>Go to my account <Icon name="arrow" size={17}/></Button></div></div>
       : <div className={`step-panel ${dir === 'back' ? 'back' : ''}`} key={step}>
         <span className="eyebrow">Step {step} of 4</span><h1>{['Review your plan', 'Your details', 'Verify your identity', 'Payment details'][step - 1]}</h1><p>{step === 1 ? 'Make sure everything looks right before you continue.' : 'Your information is protected and only used to set up your service.'}</p>
-        {step === 1 ? <div className="cart-item"><div className="cart-phone">{item.color ? <PhoneMock color={item.color} small/> : <Icon name="wifi" size={40}/>}</div><div><span className="muted-label">{item.brand}</span><h3>{item.name}</h3><p>{item.detail}</p><button onClick={item.back}>Edit plan</button></div><b>${item.monthly}<small>/mo</small></b></div>
+        {step === 1 ? <div className="cart-item"><div className="cart-phone">{item.color ? <PhoneMock color={item.color} small/> : <Icon name="wifi" size={40}/>}</div><div><span className="muted-label">{item.brand}</span><h3>{item.name}</h3><p>{item.detail}</p><button onClick={item.back}>Edit plan</button></div><b>{zar(item.monthly)}<small>/mo</small></b></div>
         : step === 2 ? <div className="form-grid">{field('firstName', 'First name', { placeholder: 'First name', autoComplete: 'given-name' })}{field('lastName', 'Last name', { placeholder: 'Last name', autoComplete: 'family-name' })}{field('email', 'Email address', { type: 'email', placeholder: 'you@example.com', autoComplete: 'email' }, true)}{field('mobile', 'Mobile number', { type: 'tel', placeholder: '+27 00 000 0000', autoComplete: 'tel' }, true)}</div>
         : step === 3 ? <div className="verify-box"><Icon name={verify === 'done' ? 'check' : 'shield'} size={42}/><h3>{verify === 'done' ? 'Identity verified' : 'Quick and secure verification'}</h3><p>{verify === 'done' ? 'Thanks — you can continue to payment.' : 'Have your ID document ready. This usually takes under two minutes.'}</p>{verify !== 'done' && <Button variant="outline" loading={verify === 'checking'} onClick={runCheck}>Start ID check</Button>}</div>
         : <div className="form-grid"><label className="full">Card number<input inputMode="numeric" autoComplete="cc-number" placeholder="0000 0000 0000 0000" value={card.number} onChange={e => setCard({ ...card, number: e.target.value.replace(/[^\d ]/g, '').slice(0, 23) })}/></label><label>Expiry<input autoComplete="cc-exp" placeholder="MM / YY" value={card.expiry} onChange={e => setCard({ ...card, expiry: e.target.value.slice(0, 7) })}/></label><label>Security code<input inputMode="numeric" autoComplete="cc-csc" placeholder="CVC" value={card.cvc} onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) })}/></label></div>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="checkout-nav"><Button variant="ghost" onClick={() => step > 1 ? move(step - 1) : item.back()}>Back</Button><Button onClick={next} loading={loading}>{step === 4 ? 'Place order' : 'Continue'} <Icon name="arrow" size={17}/></Button></div>
       </div>}
-    </section><aside className="order-summary"><h3>Order summary</h3><div><span>Monthly total</span><b>${item.monthly.toFixed(2)}</b></div><div><span>Upfront today</span><b>${item.upfront.toFixed(2)}</b></div><div><span>Delivery</span><b className="success">Free</b></div><hr/><div><span>Due today</span><b>${item.upfront.toFixed(2)}</b></div><p><Icon name="shield" size={17}/> 14-day return promise</p></aside></div></main>
+    </section><aside className="order-summary"><h3>Order summary</h3><div><span>Monthly total</span><b>{zar(item.monthly, true)}</b></div><div><span>Upfront today</span><b>{zar(item.upfront, true)}</b></div><div><span>Delivery</span><b className="success">Free</b></div><hr/><div><span>Due today</span><b>{zar(item.upfront, true)}</b></div><p><Icon name="shield" size={17}/> 14-day return promise</p><p style={{ marginTop: 8 }}>All prices in ZAR, VAT included.</p></aside></div></main>
 }
 
 // ---------- account ----------
@@ -481,19 +485,19 @@ function Account({ go }: { go: Go }) {
   const short = now.toLocaleDateString('en-GB', { month: 'short' })
   const daysLeft = Math.max(1, user.plan.renewsDay - now.getDate())
   const buy = async (gb: number) => {
-    try { const r = await api.topUp(gb); setData({ ...data, user: { ...user, usage: r.usage } }); toast(r.message); setTopUp(false) }
+    try { const r = await api.topUp(gb); setData({ ...data, user: { ...user, usage: r.usage, bill: r.bill ?? user.bill } }); toast(r.message); setTopUp(false) }
     catch (err) { toast((err as Error).message, 'error') }
   }
   return <main className="account-page">{bar}
     <div className="shell account-welcome"><div><span>{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}</span><h1>{greeting}, {user.firstName}.</h1><p>Here's how your Connectra account is looking.</p></div><Button variant="outline" onClick={() => go('phones')}>Manage plan</Button></div>
     <div className="shell dashboard-grid">
       <article className="usage-card"><div className="card-head"><div><span className="eyebrow">Mobile data</span><h3>{month} usage</h3></div><span>{daysLeft} days left</span></div><div className="usage-content"><div className="ring" style={{ '--target': leftPct } as CSSProperties}><div><b>{left.toFixed(1)}</b><span>GB left</span></div></div><div><p>Used <b>{user.usage.usedGb} GB</b> of {user.usage.totalGb} GB</p><i><em style={{ width: `${100 - leftPct}%` }}/></i><small>Renews {user.plan.renewsDay} {short}</small></div></div><button onClick={() => setTopUp(true)}>Buy more data <Icon name="chevron" size={16}/></button></article>
-      <article className="bill-card"><div className="card-head"><div><span className="eyebrow">Current bill</span><h3>Due {user.bill.dueDay} {short}</h3></div><Icon name="bill" size={26}/></div><b className="big-price">${user.bill.amount.toFixed(2)}</b><span>{user.bill.autopay ? `Paid automatically with •••• ${user.bill.cardLast4}` : 'Not yet paid'}</span><Button onClick={() => toast('Your bill is set to autopay — nothing to do this month.')}>View & pay bill</Button></article>
+      <article className="bill-card"><div className="card-head"><div><span className="eyebrow">Current bill</span><h3>Due {user.bill.dueDay} {short}</h3></div><Icon name="bill" size={26}/></div><b className="big-price">{zar(user.bill.amount, true)}</b><span>{user.bill.autopay ? `Paid automatically with •••• ${user.bill.cardLast4}` : 'Not yet paid'}</span><Button onClick={() => toast('Your bill is set to autopay — nothing to do this month.')}>View & pay bill</Button></article>
       <article className="quick-card"><span className="eyebrow">Quick actions</span><div>{[['signal', 'Buy data'], ['phone', 'Manage SIM'], ['bill', 'View bills'], ['headset', 'Get help']].map(([i, t]) => <button key={t} onClick={() => t === 'Get help' ? go('support') : t === 'Buy data' ? setTopUp(true) : toast(`${t} is available in the Connectra app.`)}><span><Icon name={i}/></span>{t}</button>)}</div></article>
-      <article className="upgrade-card"><div><span className="badge cyan">JUST FOR YOU</span><h3>More data. Same great plan.</h3><p>Upgrade to 100GB for just $5 more a month.</p><Button onClick={() => buy(20)}>See my offer</Button></div><PhoneMock color="#b8c8d9" small/></article>
+      <article className="upgrade-card"><div><span className="badge cyan">JUST FOR YOU</span><h3>More data. Same great plan.</h3><p>Upgrade to 100GB for just R99 more a month.</p><Button onClick={() => buy(20)}>See my offer</Button></div><PhoneMock color="#b8c8d9" small/></article>
     </div>
-    <div className="shell"><div className="order-list"><h3>Your orders</h3>{orders.length ? <ul>{orders.slice().reverse().map(o => <li key={o.ref}><div><b>{o.item.name}</b><br/><small>{o.item.detail}</small></div><div style={{ textAlign: 'right' }}><b>{o.ref}</b><br/><small>{o.status} · ${o.item.monthly}/mo</small></div></li>)}</ul> : <p style={{ fontSize: 12 }}>No orders yet. <button className="text-link" style={{ color: '#0b5fff', fontWeight: 700 }} onClick={() => go('phones')}>Browse phones</button></p>}</div></div>
-    {topUp && <Modal title="Buy more data" text="Bundles are added instantly and last until your plan renews." onClose={() => setTopUp(false)}><div className="option-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>{[1, 5, 10, 20].map(gb => <Button key={gb} variant="outline" onClick={() => buy(gb)}>{gb}GB</Button>)}</div></Modal>}
+    <div className="shell"><div className="order-list"><h3>Your orders</h3>{orders.length ? <ul>{orders.slice().reverse().map(o => <li key={o.ref}><div><b>{o.item.name}</b><br/><small>{o.item.detail}</small></div><div style={{ textAlign: 'right' }}><b>{o.ref}</b><br/><small>{o.status} · {zar(o.item.monthly)}/mo</small></div></li>)}</ul> : <p style={{ fontSize: 12 }}>No orders yet. <button className="text-link" style={{ color: '#0b5fff', fontWeight: 700 }} onClick={() => go('phones')}>Browse phones</button></p>}</div></div>
+    {topUp && <Modal title="Buy more data" text="Bundles are added instantly and last until your plan renews." onClose={() => setTopUp(false)}><div className="option-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>{DATA_BUNDLES.map(([gb, price]) => <Button key={gb} variant="outline" onClick={() => buy(gb)}>{gb}GB · {zar(price)}</Button>)}</div></Modal>}
   </main>
 }
 

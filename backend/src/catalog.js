@@ -1,66 +1,66 @@
-// Seed catalogue for Connectra Telecom. Prices are monthly, in USD, matching the site design.
+// Seed catalogue for Connectra Telecom. All prices are in South African Rand (ZAR), VAT inclusive.
 
 export const phones = [
   {
-    slug: 'iphone-16-pro', name: 'iPhone 16 Pro', brand: 'Apple', data: '50GB', price: 38, upfront: 49,
+    slug: 'iphone-16-pro', name: 'iPhone 16 Pro', brand: 'Apple', data: '50GB', price: 1099, upfront: 999,
     color: '#d9d6ce', accent: '#f2f0eb', badge: 'New', rating: 4.9, reviews: 128,
     lead: 'Built for Apple Intelligence. Featuring a stunning titanium design and the powerful A18 Pro chip.',
     colors: [{ name: 'Natural Titanium', hex: '#d9d6ce' }, { name: 'Black Titanium', hex: '#292b2d' }, { name: 'White Titanium', hex: '#f4f1e8' }],
-    storage: [{ size: '128GB', add: -4 }, { size: '256GB', add: 0 }, { size: '512GB', add: 7 }],
+    storage: [{ size: '128GB', add: -100 }, { size: '256GB', add: 0 }, { size: '512GB', add: 200 }],
     features: ['5G ready', 'eSIM'],
   },
   {
-    slug: 'galaxy-s25', name: 'Galaxy S25', brand: 'Samsung', data: 'Unlimited', price: 32, upfront: 29,
+    slug: 'galaxy-s25', name: 'Galaxy S25', brand: 'Samsung', data: 'Unlimited', price: 799, upfront: 499,
     color: '#b8c8d9', accent: '#edf3f8', badge: 'Best seller', rating: 4.8, reviews: 96,
     lead: 'Galaxy AI in your pocket, with a brilliant 120Hz display and all-day battery.',
     colors: [{ name: 'Icy Blue', hex: '#b8c8d9' }, { name: 'Navy', hex: '#26324a' }, { name: 'Mint', hex: '#cfe6dc' }],
-    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 4 }],
+    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 100 }],
     features: ['5G ready', 'eSIM', 'Dual SIM'],
   },
   {
-    slug: 'pixel-9-pro', name: 'Pixel 9 Pro', brand: 'Google', data: '100GB', price: 29, upfront: 19,
+    slug: 'pixel-9-pro', name: 'Pixel 9 Pro', brand: 'Google', data: '100GB', price: 749, upfront: 299,
     color: '#222b35', accent: '#e6efff', rating: 4.7, reviews: 74,
     lead: 'The best of Google AI with a pro-level camera system that makes every shot count.',
     colors: [{ name: 'Obsidian', hex: '#222b35' }, { name: 'Porcelain', hex: '#ece7df' }, { name: 'Rose Quartz', hex: '#efd3d0' }],
-    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 4 }, { size: '512GB', add: 9 }],
+    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 100 }, { size: '512GB', add: 250 }],
     features: ['5G ready', 'eSIM'],
   },
   {
-    slug: 'galaxy-a56', name: 'Galaxy A56', brand: 'Samsung', data: '25GB', price: 21, upfront: 0,
+    slug: 'galaxy-a56', name: 'Galaxy A56', brand: 'Samsung', data: '25GB', price: 399, upfront: 0,
     color: '#c5b9e6', accent: '#f1edfb', rating: 4.6, reviews: 211,
     lead: 'Awesome everyday performance, a bright display and a camera that loves low light.',
     colors: [{ name: 'Awesome Lilac', hex: '#c5b9e6' }, { name: 'Graphite', hex: '#33363b' }],
-    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 3 }],
+    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 80 }],
     features: ['5G ready', 'Dual SIM'],
   },
   {
-    slug: 'iphone-15', name: 'iPhone 15', brand: 'Apple', data: '50GB', price: 27, upfront: 19,
+    slug: 'iphone-15', name: 'iPhone 15', brand: 'Apple', data: '50GB', price: 699, upfront: 299,
     color: '#d5e2da', accent: '#eff8f3', rating: 4.8, reviews: 302,
     lead: 'Dynamic Island, a 48MP main camera and USB-C — iPhone essentials, beautifully done.',
     colors: [{ name: 'Green', hex: '#d5e2da' }, { name: 'Black', hex: '#2a2c2e' }, { name: 'Pink', hex: '#f3dadf' }],
-    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 5 }],
+    storage: [{ size: '128GB', add: 0 }, { size: '256GB', add: 150 }],
     features: ['5G ready', 'eSIM'],
   },
   {
-    slug: 'xiaomi-14t', name: 'Xiaomi 14T', brand: 'Xiaomi', data: '75GB', price: 24, upfront: 0,
+    slug: 'xiaomi-14t', name: 'Xiaomi 14T', brand: 'Xiaomi', data: '75GB', price: 549, upfront: 0,
     color: '#202124', accent: '#eef0f5', rating: 4.5, reviews: 58,
     lead: 'Leica-tuned optics, a flagship-grade chip and 120W HyperCharge.',
     colors: [{ name: 'Titan Black', hex: '#202124' }, { name: 'Titan Blue', hex: '#40597a' }],
-    storage: [{ size: '256GB', add: 0 }, { size: '512GB', add: 5 }],
+    storage: [{ size: '256GB', add: 0 }, { size: '512GB', add: 150 }],
     features: ['5G ready', 'Dual SIM'],
   },
 ]
 
 export const internetPlans = [
-  { id: 'fibre-start', name: 'Fibre Start', speed: '50 Mbps', mbps: 50, price: 24, note: 'Great for browsing' },
-  { id: 'fibre-plus', name: 'Fibre Plus', speed: '200 Mbps', mbps: 200, price: 36, note: 'Perfect for families', popular: true },
-  { id: 'fibre-max', name: 'Fibre Max', speed: '500 Mbps', mbps: 500, price: 49, note: 'Built for everything' },
+  { id: 'fibre-start', name: 'Fibre Start', speed: '50 Mbps', mbps: 50, price: 499, note: 'Great for browsing' },
+  { id: 'fibre-plus', name: 'Fibre Plus', speed: '200 Mbps', mbps: 200, price: 899, note: 'Perfect for families', popular: true },
+  { id: 'fibre-max', name: 'Fibre Max', speed: '500 Mbps', mbps: 500, price: 1199, note: 'Built for everything' },
 ]
 
 export const deals = [
-  { id: 'sim-unlimited', type: 'SIM ONLY', title: 'Unlimited everything.', price: 25, text: 'Calls, texts and 5G data. No limits, no slowdowns.' },
-  { id: 'iphone-16-pro-50', type: 'MOST POPULAR', title: '50GB 5G data', phone: 'iphone-16-pro', price: 38, upfront: 49, term: 36 },
-  { id: 'fibre-200', type: 'HOME FIBRE', title: '200 Mbps Fibre', plan: 'fibre-plus', price: 36, text: 'Stream, work and play without buffering.' },
+  { id: 'sim-unlimited', type: 'SIM ONLY', title: 'Unlimited everything.', price: 599, text: 'Calls, texts and 5G data. No limits, no slowdowns.' },
+  { id: 'iphone-16-pro-50', type: 'MOST POPULAR', title: '50GB 5G data', phone: 'iphone-16-pro', price: 1099, upfront: 999, term: 36 },
+  { id: 'fibre-200', type: 'HOME FIBRE', title: '200 Mbps Fibre', plan: 'fibre-plus', price: 899, text: 'Stream, work and play without buffering.' },
 ]
 
 export const businessSolutions = [

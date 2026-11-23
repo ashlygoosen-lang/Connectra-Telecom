@@ -48,7 +48,7 @@ export const api = {
   login: (email: string, password: string) => request<{ token: string; user: User }>('/auth/login', { method: 'POST', body: { email, password } }),
   register: (name: string, email: string, password: string) => request<{ token: string; user: User }>('/auth/register', { method: 'POST', body: { name, email, password } }),
   me: () => request<{ user: User; orders: OrderSummary[] }>('/account/me'),
-  topUp: (gb: number) => request<{ usage: User['usage']; message: string }>('/account/data-topup', { method: 'POST', body: { gb } }),
+  topUp: (gb: number) => request<{ usage: User['usage']; bill?: User['bill']; message: string }>('/account/data-topup', { method: 'POST', body: { gb } }),
   searchArticles: (q: string, topic?: string) => request<{ articles: Article[] }>(`/support/articles?q=${encodeURIComponent(q)}${topic ? `&topic=${encodeURIComponent(topic)}` : ''}`).then(d => d.articles),
   createTicket: (body: { name: string; email: string; topic: string; message: string }) => request<{ ref: string; message: string }>('/support/tickets', { method: 'POST', body }),
 }
