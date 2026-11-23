@@ -39,7 +39,7 @@ app.use('/api', (_req, res) => res.status(404).json({ ok: false, error: 'Not fou
 
 // Public site address, used for absolute URLs Google needs (logo, canonical, social image).
 // Set SITE_URL in production (e.g. https://connectra.co.za); otherwise it is taken from the request.
-const VINK_GROUP_URL = process.env.VINK_GROUP_URL || 'https://vink-holding-frontend-production.up.railway.app'
+const VINK_GROUP_URL = process.env.VINK_GROUP_URL || 'https://vinklife-production.up.railway.app'
 const siteUrl = (req) => (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '')
 
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${siteUrl(req)}/sitemap.xml\n`))

@@ -22,7 +22,7 @@ type Toast = { id: number; text: string; kind: 'ok' | 'error' }
 // VINK Group parent site: injected by the server (VINK_GROUP_URL); falls back for local dev.
 const VINK_GROUP_URL = (() => {
   const v = typeof document !== 'undefined' ? document.querySelector('meta[name="vink-group-url"]')?.getAttribute('content') : ''
-  return v && v.startsWith('http') ? v : 'https://vink-holding-frontend-production.up.railway.app'
+  return v && v.startsWith('http') ? v : 'https://vinklife-production.up.railway.app'
 })()
 const megaFor = (p: string) => (p === 'phones' || p === 'internet' || p === 'voip' ? p : null) as 'phones' | 'internet' | 'voip' | null
 const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voip', 'voice', 'checkout', 'account', 'support']
