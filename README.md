@@ -1,6 +1,6 @@
 # Connectra Telecom — Website
 
-Connectra Telecom is a division of **VINK Group (Pty) Ltd**, registration number 2018/079316/07 (head office: Cape Town). The footer carries this statement on every page.
+Connectra Telecom is a division of **VINK Group (Pty) Ltd**, registration number 2018/079316/07 (head office: Cape Town). The footer carries a one-line text statement of this; no VINK logo or links appear on the Connectra site. Connectra's logo and link appear on the VINK Group site (ashlygoosen-lang/VINKLIFE).
 
 React 19 + Vite + Tailwind v4 frontend (from the Figma Make export) with a Node/Express backend. In production both run as **one service**: Express serves the API under `/api` and the built frontend.
 
@@ -27,7 +27,7 @@ Demo account: `demo@connectra.africa` / `Connectra2026!` (set `SEED_DEMO=false` 
 
 1. Push this folder to GitHub and create a Railway service from the repo (root directory = repo root).
 2. Railway uses `railway.json`: build `npm run build`, start `npm start`, health check `/api/health`.
-3. Set variables: `JWT_SECRET` (long random string), `ADMIN_KEY` (for `/api/admin/summary`), `SITE_URL` (the public address, e.g. `https://connectra.co.za`, used for the Google logo, canonical link and share image), `VINK_GROUP_URL` (the VINK Group website the footer links to), optionally `CORS_ORIGIN`.
+3. Set variables: `JWT_SECRET` (long random string), `ADMIN_KEY` (for `/api/admin/summary`), `SITE_URL` (the public address, e.g. `https://connectra.co.za`, used for the Google logo, canonical link and share image), optionally `CORS_ORIGIN`.
 4. To keep data across deploys, add a Volume mounted at `/data` and set `DATA_DIR=/data`.
 
 ## API
@@ -59,10 +59,9 @@ Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DI
 ## Logo in Google & branding
 
 - Favicon set (`favicon.ico` 16/32/48, `favicon.svg`, 48/96/192/512 PNGs, Apple touch icon, maskable icon, `site.webmanifest`), built from the Connectra logo mark. Google shows this favicon beside search results.
-- `Organization` + `WebSite` structured data with `logo` → `/assets/connectra-logo.png` (512×512), and VINK Group as `parentOrganization`. The server fills in absolute URLs from `SITE_URL`.
+- `Organization` + `WebSite` structured data with `logo` → `/assets/connectra-logo.png` (512×512), The server fills in absolute URLs from `SITE_URL`.
 - Social share card `/assets/og-image.jpg` (1200×630) for WhatsApp, Facebook, LinkedIn and X.
 - `/robots.txt` and `/sitemap.xml` are generated with the live address.
-- **VINK Group logo in the footer:** add the official logo as `frontend/public/assets/vink-group-logo.png` (transparent PNG, about 44px high when shown). Until then a gold "V" badge is shown. Logo and text link to `VINK_GROUP_URL`.
 
 After going live: add the site to Google Search Console, submit `/sitemap.xml` and request indexing of the home page. Google usually picks up the favicon and logo within days to a few weeks.
 

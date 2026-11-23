@@ -39,7 +39,6 @@ app.use('/api', (_req, res) => res.status(404).json({ ok: false, error: 'Not fou
 
 // Public site address, used for absolute URLs Google needs (logo, canonical, social image).
 // Set SITE_URL in production (e.g. https://connectra.co.za); otherwise it is taken from the request.
-const VINK_GROUP_URL = process.env.VINK_GROUP_URL || 'https://vinklife-production.up.railway.app'
 const siteUrl = (req) => (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '')
 
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${siteUrl(req)}/sitemap.xml\n`))
@@ -53,7 +52,7 @@ if (fs.existsSync(DIST)) {
   const escapeAttr = (v) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
   const renderIndex = (req, res) => {
     res.set('Cache-Control', 'no-cache')
-    res.type('html').send(template.replaceAll('%SITE_URL%', escapeAttr(siteUrl(req))).replaceAll('%VINK_GROUP_URL%', escapeAttr(VINK_GROUP_URL)))
+    res.type('html').send(template.replaceAll('%SITE_URL%', escapeAttr(siteUrl(req))))
   }
   app.get(['/', '/index.html'], renderIndex)
   app.use('/assets', express.static(path.join(DIST, 'assets'), { maxAge: '30d' }))
