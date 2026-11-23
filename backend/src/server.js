@@ -48,11 +48,18 @@ app.get('/sitemap.xml', (req, res) => {
 })
 
 if (fs.existsSync(DIST)) {
-  const template = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8')
+  // Re-read index.html when it changes (e.g. after a rebuild) so asset hashes are never stale.
+  const indexPath = path.join(DIST, 'index.html')
+  let cached = { mtime: 0, html: '' }
+  const template = () => {
+    const mtime = fs.statSync(indexPath).mtimeMs
+    if (mtime !== cached.mtime) cached = { mtime, html: fs.readFileSync(indexPath, 'utf8') }
+    return cached.html
+  }
   const escapeAttr = (v) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
   const renderIndex = (req, res) => {
     res.set('Cache-Control', 'no-cache')
-    res.type('html').send(template.replaceAll('%SITE_URL%', escapeAttr(siteUrl(req))))
+    res.type('html').send(template().replaceAll('%SITE_URL%', escapeAttr(siteUrl(req))))
   }
   app.get(['/', '/index.html'], renderIndex)
   app.use('/assets', express.static(path.join(DIST, 'assets'), { maxAge: '30d' }))

@@ -7,12 +7,13 @@ import { fallbackPhones, fallbackPlans, fallbackVoip, voipAreaCodes, faqs as faq
 import { reducedMotion, startMotion, transition } from './motion'
 import { CoverageMap, SpeedFinder, MegaMenu } from './showcase'
 import { VoipPage } from './voip'
+import { LegalPage } from './legalPage'
 
 // All prices are South African Rand, VAT inclusive (en-ZA formatting: R1 099 / R1 099,00).
 const zar = (n: number, cents = false) => `R${n.toLocaleString('en-ZA', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 })}`
 const DATA_BUNDLES: [number, number][] = [[1, 85], [5, 229], [10, 349], [20, 499]]
 
-type Page = 'home' | 'phones' | 'product' | 'internet' | 'voip' | 'voice' | 'checkout' | 'account' | 'support'
+type Page = 'home' | 'phones' | 'product' | 'internet' | 'voip' | 'voice' | 'checkout' | 'account' | 'support' | 'legal'
 type Route = { page: Page; slug?: string }
 type GoOptions = { slug?: string; anchor?: string }
 export type CartItem = { type: 'phone'; slug: string; color: string; storage: string; term: number } | { type: 'internet'; planId: string }
@@ -20,7 +21,7 @@ export type CartItem = { type: 'phone'; slug: string; color: string; storage: st
 type Toast = { id: number; text: string; kind: 'ok' | 'error' }
 
 const megaFor = (p: string) => (p === 'phones' || p === 'internet' || p === 'voip' ? p : null) as 'phones' | 'internet' | 'voip' | null
-const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voip', 'voice', 'checkout', 'account', 'support']
+const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voip', 'voice', 'checkout', 'account', 'support', 'legal']
 
 const navItems: [string, Page, string?][] = [
   ['Mobile Contracts', 'phones'],
@@ -155,6 +156,18 @@ function Header({ go }: { go: Go }) {
   </header>
 }
 
+const LEGAL_LINKS: [string, string][] = [['Terms of Use', 'terms'], ['Privacy Policy', 'privacy'], ['Refunds & Cancellation', 'refunds'], ['Service Terms', 'service-terms'], ['Acceptable Use', 'acceptable-use'], ['Cookie Policy', 'cookies'], ['Complaints', 'complaints'], ['PAIA & POPIA', 'paia']]
+
+function SocialIcon({ name }: { name: 'linkedin' | 'facebook' | 'instagram' | 'x' }) {
+  const p = {
+    linkedin: <><path d="M6.5 9.5v8M6.5 6.5v.01M10.5 17.5v-4.5a2.5 2.5 0 0 1 5 0v4.5M10.5 9.5v8"/><rect x="3" y="3" width="18" height="18" rx="4"/></>,
+    facebook: <><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M15.5 8H14a2 2 0 0 0-2 2v11M9.5 13h5"/></>,
+    instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5v.01"/></>,
+    x: <path d="M4 4l16 16M20 4L4 20"/>,
+  }[name]
+  return <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{p}</svg>
+}
+
 function Footer({ go }: { go: Go }) {
   const { toast, openModal } = useApp()
   const [email, setEmail] = useState('')
@@ -166,19 +179,49 @@ function Footer({ go }: { go: Go }) {
     catch (err) { toast((err as Error).message, 'error') }
     finally { setLoading(false) }
   }
-  return <footer className="footer">
-    <div className="shell newsletter">
-      <div><span className="eyebrow light">Stay in the loop</span><h3>Deals worth connecting for.</h3></div>
-      <form className="newsletter-form" onSubmit={subscribe}><input type="email" required aria-label="Email address" placeholder="Your email address" value={email} onChange={e => setEmail(e.target.value)}/><Button type="submit" loading={loading}>Subscribe</Button></form>
+  const legal = (slug: string) => go('legal', { slug })
+  return <footer className="footer ft">
+    <div className="shell ft-top">
+      <div className="ft-news">
+        <div>
+          <span className="eyebrow light">Stay in the loop</span>
+          <h3>Deals worth connecting for.</h3>
+          <p>New phones, fibre specials and VoIP offers, once or twice a month. No spam.</p>
+        </div>
+        <form className="ft-form" onSubmit={subscribe}>
+          <div className="ft-input"><Icon name="bill" size={18}/><input type="email" required aria-label="Email address" placeholder="Your email address" value={email} onChange={e => setEmail(e.target.value)}/><Button type="submit" loading={loading}>Subscribe</Button></div>
+          <small>By subscribing you agree to our <button type="button" onClick={() => legal('privacy')}>Privacy Policy</button>. Unsubscribe at any time.</small>
+        </form>
+      </div>
     </div>
-    <div className="shell footer-grid">
-      <div className="footer-brand"><Logo onClick={() => go('home')}/><p>Bringing people closer with reliable, affordable connections.</p><div className="socials"><span>in</span><span>f</span><span>ig</span><span>𝕏</span></div></div>
-      <div><h4>Services</h4><button onClick={() => go('phones')}>Mobile contracts</button><button onClick={() => go('internet')}>Home internet</button><button onClick={() => go('voip')}>VoIP calling</button><button onClick={() => go('voice')}>Voice & business</button><button onClick={() => go('home', { anchor: 'deals' })}>SIM-only plans</button></div>
-      <div><h4>Help</h4><button onClick={() => go('support')}>Support centre</button><button onClick={() => go('home', { anchor: 'coverage' })}>Check coverage</button><button onClick={() => openModal('track')}>Track my order</button><button onClick={() => openModal('ticket')}>Contact us</button></div>
-      <div><h4>Connectra</h4><button>About us</button><button>Careers</button><button>Our network</button><button>Newsroom</button></div>
+
+    <div className="shell ft-main">
+      <div className="ft-brand">
+        <Logo onClick={() => go('home')}/>
+        <p>Bringing people closer with reliable, affordable mobile, fibre and VoIP across South Africa.</p>
+        <ul className="ft-contact">
+          <li><span><Icon name="headset" size={17}/></span><div><b>24/7 support</b><button onClick={() => openModal('ticket')}>Send us a message</button></div></li>
+          <li><span><Icon name="map" size={17}/></span><div><b>Head office</b><small>Cape Town, South Africa</small></div></li>
+        </ul>
+        <div className="ft-social" aria-label="Social media">{(['linkedin', 'facebook', 'instagram', 'x'] as const).map(n => <span key={n} title={n === 'x' ? 'X' : n[0].toUpperCase() + n.slice(1)}><SocialIcon name={n}/></span>)}</div>
+      </div>
+      <nav className="ft-col" aria-label="Services"><h4>Services</h4><button onClick={() => go('phones')}>Mobile contracts</button><button onClick={() => go('home', { anchor: 'deals' })}>SIM-only plans</button><button onClick={() => go('internet')}>Home fibre</button><button onClick={() => go('voip')}>VoIP calling</button><button onClick={() => go('voice')}>Business solutions</button></nav>
+      <nav className="ft-col" aria-label="Help"><h4>Help</h4><button onClick={() => go('support')}>Support centre</button><button onClick={() => go('home', { anchor: 'coverage' })}>Check coverage</button><button onClick={() => openModal('track')}>Track my order</button><button onClick={() => go('account')}>My Connectra</button><button onClick={() => openModal('ticket')}>Contact us</button></nav>
+      <nav className="ft-col" aria-label="Legal"><h4>Legal</h4>{LEGAL_LINKS.map(([label, slug]) => <button key={slug} onClick={() => legal(slug)}>{label}</button>)}</nav>
+      <div className="ft-col ft-app"><h4>Get the app</h4><p>Track usage, pay bills and get help on the go.</p><div className="store-row"><button>● <span>Download on the<br/><b>App Store</b></span></button><button>▶ <span>GET IT ON<br/><b>Google Play</b></span></button></div></div>
     </div>
+
+    <div className="shell ft-trust">
+      {[['shield', 'Secure checkout', 'Card details never stored'], ['wallet', 'Prices in ZAR', 'VAT included, no hidden fees'], ['check', '7-day cooling-off', 'On online orders'], ['headset', 'Real people, 24/7', 'Help when you need it']].map(([i, t, d]) =>
+        <div key={t}><span><Icon name={i} size={18}/></span><div><b>{t}</b><small>{d}</small></div></div>)}
+    </div>
+
     <div className="shell footer-division"><p>Connectra Telecom is a division of VINK Group (Pty) Ltd, registration number 2018/079316/07.</p></div>
-    <div className="shell footer-bottom"><span>© 2026 Connectra Telecom. All rights reserved. Prices in ZAR, VAT included.</span><span>Privacy · Terms · Accessibility · PAIA</span></div>
+    <div className="shell ft-bottom">
+      <span>© {new Date().getFullYear()} Connectra Telecom. All rights reserved.</span>
+      <nav aria-label="Legal shortcuts">{[['Privacy', 'privacy'], ['Terms', 'terms'], ['Refunds', 'refunds'], ['Cookies', 'cookies'], ['PAIA', 'paia']].map(([l, slug]) => <button key={slug} onClick={() => legal(slug)}>{l}</button>)}</nav>
+      <button className="ft-top-btn" onClick={() => scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' })} aria-label="Back to top"><Icon name="arrow" size={16}/></button>
+    </div>
     <div className="footer-wordmark" aria-hidden="true"><span>Connectra</span></div>
   </footer>
 }
@@ -509,6 +552,7 @@ function Checkout({ go }: { go: Go }) {
         : step === 2 ? <div className="form-grid">{field('firstName', 'First name', { placeholder: 'First name', autoComplete: 'given-name' })}{field('lastName', 'Last name', { placeholder: 'Last name', autoComplete: 'family-name' })}{field('email', 'Email address', { type: 'email', placeholder: 'you@example.com', autoComplete: 'email' }, true)}{field('mobile', 'Mobile number', { type: 'tel', placeholder: '+27 00 000 0000', autoComplete: 'tel' }, true)}</div>
         : step === 3 ? <div className="verify-box"><Icon name={verify === 'done' ? 'check' : 'shield'} size={42}/><h3>{verify === 'done' ? 'Identity verified' : 'Quick and secure verification'}</h3><p>{verify === 'done' ? 'Thanks — you can continue to payment.' : 'Have your ID document ready. This usually takes under two minutes.'}</p>{verify !== 'done' && <Button variant="outline" loading={verify === 'checking'} onClick={runCheck}>Start ID check</Button>}</div>
         : <div className="form-grid"><label className="full">Card number<input inputMode="numeric" autoComplete="cc-number" placeholder="0000 0000 0000 0000" value={card.number} onChange={e => setCard({ ...card, number: e.target.value.replace(/[^\d ]/g, '').slice(0, 23) })}/></label><label>Expiry<input autoComplete="cc-exp" placeholder="MM / YY" value={card.expiry} onChange={e => setCard({ ...card, expiry: e.target.value.slice(0, 7) })}/></label><label>Security code<input inputMode="numeric" autoComplete="cc-csc" placeholder="CVC" value={card.cvc} onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) })}/></label></div>}
+        {step === 4 && <p className="checkout-consent">By placing this order you agree to our <a href="#/legal/terms" target="_blank" rel="noopener">Terms of Use</a>, <a href="#/legal/service-terms" target="_blank" rel="noopener">Service Terms</a> and <a href="#/legal/refunds" target="_blank" rel="noopener">Refund &amp; Cancellation Policy</a>, and confirm you have read our <a href="#/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>. You may cancel an online order within 7 days without penalty (ECTA section 44).</p>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="checkout-nav"><Button variant="ghost" onClick={() => step > 1 ? move(step - 1) : item.back()}>Back</Button><Button onClick={next} loading={loading}>{step === 4 ? 'Place order' : 'Continue'} <Icon name="arrow" size={17}/></Button></div>
       </div>}
@@ -584,6 +628,7 @@ function AuthCard({ onDone }: { onDone: () => void }) {
       <Button type="submit" loading={loading}>{mode === 'login' ? 'Log in' : 'Create account'} <Icon name="arrow" size={17}/></Button>
     </form>
     <p className="auth-switch">{mode === 'login' ? <>New to Connectra? <button onClick={() => setMode('register')}>Create an account</button></> : <>Already a customer? <button onClick={() => setMode('login')}>Log in</button></>}</p>
+    {mode === 'register' && <p className="auth-hint">By creating an account you agree to our <a href="#/legal/terms">Terms of Use</a> and <a href="#/legal/privacy">Privacy Policy</a>.</p>}
     {mode === 'login' && <p className="auth-hint">Demo account: demo@connectra.africa</p>}
   </div>
 }
@@ -726,9 +771,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const titles: Record<Page, string> = { home: 'Mobile, Home Internet & Business Voice', phones: 'Mobile Contracts', product: 'Phone details', internet: 'Home Internet', voip: 'VoIP — Voice over Internet', voice: 'Voice & Business', checkout: 'Secure Checkout', account: 'My Account', support: 'Support' }
+    const titles: Record<Page, string> = { home: 'Mobile, Home Internet & Business Voice', phones: 'Mobile Contracts', product: 'Phone details', internet: 'Home Internet', voip: 'VoIP — Voice over Internet', voice: 'Voice & Business', checkout: 'Secure Checkout', account: 'My Account', support: 'Support', legal: 'Legal' }
     const phone = route.page === 'product' ? phones.find(p => p.slug === route.slug) : undefined
-    document.title = `Connectra Telecom — ${phone ? phone.name : titles[route.page]}`
+    const legalTitles: Record<string, string> = { terms: 'Terms of Use', privacy: 'Privacy Policy', refunds: 'Refund & Cancellation Policy', 'service-terms': 'Service Terms', 'acceptable-use': 'Acceptable Use Policy', cookies: 'Cookie Policy', complaints: 'Complaints & Disputes', paia: 'PAIA & Access to Information' }
+    const legal = route.page === 'legal' ? legalTitles[route.slug ?? 'terms'] : undefined
+    document.title = `Connectra Telecom — ${phone ? phone.name : legal ?? titles[route.page]}`
   }, [route, phones])
 
   const toast = useCallback((text: string, kind: 'ok' | 'error' = 'ok') => {
@@ -746,7 +793,7 @@ export default function App() {
     <div className="scroll-progress" aria-hidden="true"/>
     {!standalone && <Header go={go}/>}
     <div className="page-wrap" id="main" tabIndex={-1} key={`${page}/${route.slug ?? ''}`}>
-      {page === 'home' ? <Home go={go}/> : page === 'phones' ? <PhonesPage go={go}/> : page === 'product' ? <ProductPage go={go}/> : page === 'internet' ? <InternetPage go={go}/> : page === 'voip' ? <VoipPage/> : page === 'voice' ? <VoicePage/> : page === 'checkout' ? <Checkout go={go}/> : page === 'account' ? <Account go={go}/> : <Support/>}
+      {page === 'home' ? <Home go={go}/> : page === 'phones' ? <PhonesPage go={go}/> : page === 'product' ? <ProductPage go={go}/> : page === 'internet' ? <InternetPage go={go}/> : page === 'voip' ? <VoipPage/> : page === 'voice' ? <VoicePage/> : page === 'checkout' ? <Checkout go={go}/> : page === 'account' ? <Account go={go}/> : page === 'legal' ? <LegalPage/> : <Support/>}
     </div>
     {!standalone && <Footer go={go}/>}
     {modal === 'ticket' && <TicketModal onClose={() => setModal(null)}/>}

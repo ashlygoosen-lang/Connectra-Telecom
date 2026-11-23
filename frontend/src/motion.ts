@@ -9,7 +9,7 @@ const REVEAL = [
   '.business-grid article', '.business-quote .shell > *', '.topic-grid article', '.contact-strip',
   '.cta-band .shell > *', '.speed-guide .shell > div:first-child', '.speed-bars article',
   '.availability .shell > *', '.filters', '.listing-top', '.dashboard-grid > article', '.account-welcome',
-  '.newsletter > *', '.footer-grid > div', '.footer-bottom', '.detail-info > *', '.gallery', '.order-list',
+  '.ft-news', '.ft-main > *', '.ft-trust > div', '.ft-bottom', '.legal-summary', '.legal-section', '.detail-info > *', '.gallery', '.order-list',
   '.page-hero .shell > *', '.support-hero .shell > *', '.article-results', '.auth-card',
   '.sf-controls > *', '.sf-result', '.footer-wordmark', '.voip-perks article', '.voip-how li', '.voip-rates > *',
   '.vb-copy > *', '.vb-form', '.voip-band', '.footer-division',

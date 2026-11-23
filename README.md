@@ -56,6 +56,17 @@ Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DI
 
 **Still to connect for production:** a South African payment gateway such as PayFast, Yoco, Peach Payments or Paystack, charging in ZAR (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
 
+## Legal centre (`frontend/src/legal.ts`, `legalPage.tsx`)
+
+Eight documents at `#/legal/<slug>`, each with a plain-language summary, section navigation and print/PDF: **Terms of Use** (`terms`), **Privacy Policy** (`privacy`, POPIA), **Refund & Cancellation Policy** (`refunds`, ECTA s44 cooling-off, CPA s14 fixed-term rules, CPA s55–56 warranty), **Service Terms** (`service-terms`, mobile/fibre/VoIP incl. ICASA usage notifications and VoIP emergency-call limits), **Acceptable Use Policy** (`acceptable-use`), **Cookie Policy** (`cookies`), **Complaints & Disputes** (`complaints`, ICASA escalation) and **PAIA & Access to Information** (`paia`).
+
+Before go-live:
+1. Fill in the `null` values in `legalEntity` (street address, support/privacy/complaints email, phone, Information Officer, ICASA licence). Until then the documents point people to the website's contact form.
+2. Have the documents reviewed by a South African attorney, especially the cancellation-penalty wording, credit/NCA position for device contracts, and ICASA licence status.
+3. Publish the VINK Group PAIA manual on the PAIA page.
+
+Checkout shows a consent line linking to the Terms, Service Terms, Refund Policy and Privacy Policy, and account registration links to the Terms and Privacy Policy.
+
 ## Logo in Google & branding
 
 - Favicon set (`favicon.ico` 16/32/48, `favicon.svg`, 48/96/192/512 PNGs, Apple touch icon, maskable icon, `site.webmanifest`), built from the Connectra logo mark. Google shows this favicon beside search results.
