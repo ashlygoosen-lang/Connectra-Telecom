@@ -216,8 +216,6 @@
 .motion-ok .step-panel.back { animation-name: step-back; }
 @keyframes step-in { from { opacity: 0; transform: translateX(28px); } }
 @keyframes step-back { from { opacity: 0; transform: translateX(-28px); } }
-.motion-ok .device-swap { animation: device-swap .8s var(--ease-out) both; }
-@keyframes device-swap { from { opacity: 0; transform: translateY(18px) rotateY(40deg); } }
 .main-device { perspective: 900px; }
 .motion-ok .option-row button, .motion-ok .color-options button { transition: transform .3s var(--ease-out), border-color .25s, background .25s, color .25s, box-shadow .25s; }
 .motion-ok .color-options button:hover { transform: scale(1.12); }

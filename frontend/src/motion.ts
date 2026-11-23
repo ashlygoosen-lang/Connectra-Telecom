@@ -11,6 +11,7 @@ const REVEAL = [
   '.availability .shell > *', '.filters', '.listing-top', '.dashboard-grid > article', '.account-welcome',
   '.newsletter > *', '.footer-grid > div', '.footer-bottom', '.detail-info > *', '.gallery', '.order-list',
   '.page-hero .shell > *', '.support-hero .shell > *', '.article-results', '.auth-card',
+  '.sf-controls > *', '.sf-result', '.footer-wordmark',
 ].join(',')
 
 export const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches

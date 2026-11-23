@@ -53,6 +53,16 @@ Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DI
 
 **Still to connect for production:** a South African payment gateway such as PayFast, Yoco, Peach Payments or Paystack, charging in ZAR (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
 
+## Interactive showcase (`frontend/src/showcase.tsx`)
+
+- **Network map**: a dot-matrix map of South Africa (`saMap.ts`, generated) with 12 city 5G hubs, flowing backbone links, hover/focus labels, and a coverage reveal that ripples out from Johannesburg
+- **Speed finder**: on the Home Internet page, household size and online habits feed a live gauge that recommends a fibre plan
+- **Mega menu**: desktop dropdown panels for Mobile Contracts (brands, featured phones, SIM-only promo) and Home Internet (plans, router promo)
+- **360° device viewer**: drag or tap "View in 360°" on any phone to rotate it and see the back
+- Phones are drawn in CSS and tinted with each model's real colour (frame, buttons, screen, back camera module)
+
+Performance: self-hosted Inter and Poppins (no Google Fonts request), hero photo served as WebP/JPEG at 560/1024 px (19–43 KB instead of the 1.6 MB PNG), preloaded with `imagesrcset`.
+
 ## Animation system
 
 All motion is dependency-free (`frontend/src/motion.ts` + `motion.css`) and only animates transform / opacity / clip-path:

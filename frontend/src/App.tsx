@@ -1,10 +1,11 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, FormEvent, ReactNode } from 'react'
+import type { CSSProperties, FormEvent, ReactNode, PointerEvent as RPointerEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { api, tokenStore } from './api'
 import type { Article, CoverageResult, InternetPlan, OrderSummary, Phone, User } from './api'
 import { fallbackPhones, fallbackPlans, faqs as faqData, supportTopics } from './data'
 import { reducedMotion, startMotion, transition } from './motion'
+import { CoverageMap, SpeedFinder, MegaMenu } from './showcase'
 
 // All prices are South African Rand, VAT inclusive (en-ZA formatting: R1 099 / R1 099,00).
 const zar = (n: number, cents = false) => `R${n.toLocaleString('en-ZA', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 })}`
@@ -49,7 +50,7 @@ function parseRoute(): Route {
 }
 
 // ---------- primitives ----------
-function Icon({ name, size = 22 }: { name: string; size?: number }) {
+export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
     signal: <><path d="M4 20h.01M8 16a6 6 0 0 1 8 0M4 12a12 12 0 0 1 16 0"/><path d="M12 20h.01"/></>,
     phone: <><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4M11 19h2"/></>,
@@ -109,7 +110,7 @@ function Modal({ title, text, onClose, children }: { title: string; text?: strin
 
 // ---------- layout ----------
 function Header({ go }: { go: Go }) {
-  const { route } = useApp()
+  const { route, phones, plans } = useApp()
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState<string | null>(null)
   const navRef = useRef<HTMLElement>(null)
@@ -125,19 +126,25 @@ function Header({ go }: { go: Go }) {
   }, [hover, active])
   useLayoutEffect(() => { place(); addEventListener('resize', place); return () => removeEventListener('resize', place) }, [place])
 
-  const nav = (page: Page, anchor?: string) => { go(page, { anchor }); setOpen(false) }
-  return <header className="header">
+  const nav = (page: Page, anchor?: string) => { go(page, { anchor }); setOpen(false); setMega(null) }
+  const [mega, setMega] = useState<'phones' | 'internet' | null>(null)
+  const megaTimer = useRef<number>(0)
+  const openMega = (m: 'phones' | 'internet' | null) => { clearTimeout(megaTimer.current); setMega(m) }
+  const closeMega = () => { clearTimeout(megaTimer.current); megaTimer.current = window.setTimeout(() => setMega(null), 160) }
+  useEffect(() => { setMega(null) }, [route.page, route.slug])
+  return <header className="header" onMouseLeave={closeMega} onKeyDown={e => e.key === 'Escape' && setMega(null)}>
     <div className="nav shell">
       <Logo onClick={() => nav('home')}/>
       <nav ref={navRef} className={open ? 'nav-links open' : 'nav-links'} onMouseLeave={() => setHover(null)} aria-label="Main">
-        {navItems.map(([label, page, anchor]) => <button key={label} data-label={label} className={label === active ? 'current' : ''} aria-current={label === active ? 'page' : undefined} onMouseEnter={() => setHover(label)} onClick={() => nav(page, anchor)}>{label}</button>)}
-        <button data-label="Coverage" onMouseEnter={() => setHover('Coverage')} onClick={() => nav('home', 'coverage')}>Coverage</button>
+        {navItems.map(([label, page, anchor]) => <button key={label} data-label={label} className={label === active ? 'current' : ''} aria-current={label === active ? 'page' : undefined} onMouseEnter={() => { setHover(label); openMega(page === 'phones' ? 'phones' : page === 'internet' ? 'internet' : null) }} onFocus={() => openMega(page === 'phones' ? 'phones' : page === 'internet' ? 'internet' : null)} aria-haspopup={page === 'phones' || page === 'internet' ? 'true' : undefined} aria-expanded={page === 'phones' ? mega === 'phones' : page === 'internet' ? mega === 'internet' : undefined} onClick={() => nav(page, anchor)}>{label}</button>)}
+        <button data-label="Coverage" onMouseEnter={() => { setHover('Coverage'); openMega(null) }} onClick={() => nav('home', 'coverage')}>Coverage</button>
         <div className="mobile-actions"><Button variant="outline" onClick={() => nav('account')}>Log in</Button><Button onClick={() => nav('phones')}>Get connected</Button></div>
         <span className="nav-indicator" aria-hidden="true"/>
       </nav>
       <div className="nav-actions"><Button variant="ghost" onClick={() => go('account')}><Icon name="user" size={18}/> Log in</Button><Button onClick={() => go('phones')}>Get connected</Button></div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu" aria-expanded={open}><Icon name={open ? 'close' : 'menu'}/></button>
     </div>
+    <MegaMenu phones={phones} plans={plans} open={mega} onEnter={() => openMega(mega)} onLeave={closeMega} go={(p, slug) => { go(p as Page, { slug }); setMega(null) }}/>
   </header>
 }
 
@@ -163,12 +170,18 @@ function Footer({ go }: { go: Go }) {
       <div><h4>Help</h4><button onClick={() => go('support')}>Support centre</button><button onClick={() => go('home', { anchor: 'coverage' })}>Check coverage</button><button onClick={() => openModal('track')}>Track my order</button><button onClick={() => openModal('ticket')}>Contact us</button></div>
       <div><h4>Connectra</h4><button>About us</button><button>Careers</button><button>Our network</button><button>Newsroom</button></div>
     </div>
-    <div className="shell footer-bottom"><span>© 2026 Connectra Telecom. All rights reserved.</span><span>Privacy · Terms · Accessibility</span></div>
+    <div className="shell footer-bottom"><span>© 2026 Connectra Telecom. All rights reserved. Prices in ZAR, VAT included.</span><span>Privacy · Terms · Accessibility · PAIA</span></div>
+    <div className="footer-wordmark" aria-hidden="true"><span>Connectra</span></div>
   </footer>
 }
 
-function PhoneMock({ color = '#b8c8d9', small = false }: { color?: string; small?: boolean }) {
-  return <div className={`phone-mock ${small ? 'small' : ''}`} style={{ background: color }}><div className="camera"/><div className="phone-screen"><span>12:42</span><div className="screen-orb"/></div></div>
+export function PhoneMock({ color = '#b8c8d9', small = false, back = false }: { color?: string; small?: boolean; back?: boolean }) {
+  return <div className={`phone-mock ${small ? 'small' : ''}`} style={{ '--body': color } as CSSProperties} aria-hidden="true">
+    <i className="pm-key pm-key-a"/><i className="pm-key pm-key-b"/><i className="pm-key pm-key-c"/>
+    <div className="camera"/>
+    <div className="phone-screen"><span className="pm-time">12:42</span>{!small && <span className="pm-date">Tuesday 25 November</span>}<div className="screen-orb"/><div className="pm-dock"><i/><i/><i/><i/></div><div className="pm-glare"/></div>
+    {back && <div className="pm-back"><div className="pm-lens"><i/><i/><i/></div><span className="pm-logo"/></div>}
+  </div>
 }
 
 function SearchBar({ placeholder = 'Enter your address or postcode', button = 'Check coverage' }: { placeholder?: string; button?: string }) {
@@ -227,7 +240,10 @@ function Home({ go }: { go: Go }) {
           <div className="hero-glow" data-depth style={{ '--depth': -14 } as CSSProperties}/>
           <div className="speed-pill" data-depth style={{ '--depth': 34 } as CSSProperties}><Icon name="bolt" size={18}/><div><b>Lightning fast</b><span>Up to 1 Gbps</span></div></div>
           <div className="coverage-pill" data-depth style={{ '--depth': 26 } as CSSProperties}><span><Icon name="signal" size={18}/></span><div><b><span data-count="98" data-suffix="%">98%</span> coverage</b><small>Nationwide network</small></div></div>
-          <img src="/assets/connectra-hero.png" alt="Smiling Connectra customer using a smartphone" fetchPriority="high" data-depth style={{ '--depth': 12 } as CSSProperties}/>
+          <picture>
+            <source type="image/webp" srcSet="/assets/connectra-hero-560.webp 560w, /assets/connectra-hero-1024.webp 1024w" sizes="(max-width: 760px) 340px, 465px"/>
+            <img src="/assets/connectra-hero-1024.jpg" srcSet="/assets/connectra-hero-560.jpg 560w, /assets/connectra-hero-1024.jpg 1024w" sizes="(max-width: 760px) 340px, 465px" width={465} height={580} alt="Smiling Connectra customer using a smartphone" fetchPriority="high" decoding="async" data-depth style={{ '--depth': 12 } as CSSProperties}/>
+          </picture>
         </div>
       </div>
     </section>
@@ -272,7 +288,7 @@ function Home({ go }: { go: Go }) {
 
     <section className="section shell coverage" id="coverage">
       <div className="coverage-copy"><span className="eyebrow light">Nationwide coverage</span><h2>See where Connectra<br/>can take you.</h2><p>From busy city streets to weekends away, our network keeps you close to what matters.</p><SearchBar/><small><span className="live-dot"/> Live coverage data updated daily</small></div>
-      <div className="map-art" aria-label="Illustrated network coverage map"><div className="land land-a"/><div className="land land-b"/><div className="land land-c"/>{[1, 2, 3, 4, 5, 6, 7].map(i => <i key={i} className={`map-dot d${i}`}/>)}</div>
+      <div className="map-art"><CoverageMap/></div>
     </section>
 
     <section className="section shell">
@@ -312,8 +328,8 @@ function matches(p: Phone, group: string, value: string) {
 }
 
 function PhonesPage({ go }: { go: Go }) {
-  const { phones } = useApp()
-  const [selected, setSelected] = useState<string[]>([])
+  const { phones, route } = useApp()
+  const [selected, setSelected] = useState<string[]>(() => route.slug ? [`Brand:${decodeURIComponent(route.slug)}`] : [])
   const [sort, setSort] = useState('Recommended')
   const [showFilters, setShowFilters] = useState(false)
   const toggle = (key: string) => setSelected(s => s.includes(key) ? s.filter(x => x !== key) : [...s, key])
@@ -352,7 +368,7 @@ function ProductDetail({ phone, go, onAdd }: { phone: Phone; go: Go; onAdd: (c: 
   const hex = phone.colors.find(c => c.name === color)?.hex ?? phone.color
   const monthly = monthlyFor(phone, storage, term)
   return <main className="product-detail shell"><button className="back" onClick={() => go('phones')}>‹ Back to all phones</button><div className="detail-grid">
-    <div className="gallery"><div className="thumbs">{phone.colors.slice(0, 2).map(c => <button key={c.name} className={color === c.name ? 'active' : ''} onClick={() => setColor(c.name)} aria-label={c.name}><PhoneMock color={c.hex} small/></button>)}<button aria-label="Play video"><Icon name="play"/></button></div><div className="main-device">{phone.badge && <span className="badge blue">{phone.badge.toUpperCase()}</span>}<div className="device-swap" key={color}><PhoneMock color={hex}/></div><span>View in 360°</span></div></div>
+    <div className="gallery"><div className="thumbs">{phone.colors.slice(0, 2).map(c => <button key={c.name} className={color === c.name ? 'active' : ''} onClick={() => setColor(c.name)} aria-label={c.name}><PhoneMock color={c.hex} small/></button>)}<button aria-label="Play video"><Icon name="play"/></button></div><Device360 key={color} color={hex} badge={phone.badge}/></div>
     <div className="detail-info"><span className="muted-label">{phone.brand.toUpperCase()}</span><h1>{phone.name}</h1><div className="rating"><span>★★★★★</span> {phone.rating} ({phone.reviews} reviews)</div><p className="detail-lead">{phone.lead}</p>
       <Selector label="Colour" value={color}><div className="color-options">{phone.colors.map(c => <button key={c.name} aria-label={c.name} aria-pressed={color === c.name} className={color === c.name ? 'active' : ''} onClick={() => setColor(c.name)} style={{ background: c.hex }}/>)}</div></Selector>
       <Selector label="Storage" value={storage}><div className="option-row">{phone.storage.map(s => <button className={storage === s.size ? 'active' : ''} onClick={() => setStorage(s.size)} key={s.size}>{s.size}</button>)}</div></Selector>
@@ -363,12 +379,28 @@ function ProductDetail({ phone, go, onAdd }: { phone: Phone; go: Go; onAdd: (c: 
   </div></main>
 }
 
+function Device360({ color, badge }: { color: string; badge?: string }) {
+  const [angle, setAngle] = useState(0)
+  const [spin, setSpin] = useState(false)
+  const drag = useRef<{ x: number; a: number } | null>(null)
+  const down = (e: RPointerEvent) => { if (spin) return; drag.current = { x: e.clientX, a: angle }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
+  const move = (e: RPointerEvent) => { if (drag.current) setAngle(drag.current.a + (e.clientX - drag.current.x) * 0.9) }
+  const up = () => { if (!drag.current) return; drag.current = null; setAngle(a => Math.round(a / 180) * 180) }
+  const play = () => { if (reducedMotion()) { setAngle(a => a + 180); return } setSpin(true); setTimeout(() => setSpin(false), 1900) }
+  return <div className="main-device" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-dragging={drag.current ? 'true' : undefined}>
+    {badge && <span className="badge blue">{badge.toUpperCase()}</span>}
+    <div className="device-floor" aria-hidden="true"/>
+    <div className={`device-swap ${spin ? 'spinning' : ''}`} style={{ '--ry': `${angle}deg` } as CSSProperties}><PhoneMock color={color} back/></div>
+    <button type="button" className="device-360" onClick={play}><Icon name="play" size={14}/> View in 360° <small>or drag to rotate</small></button>
+  </div>
+}
+
 function Selector({ label, value, children }: { label: string; value: string; children: ReactNode }) { return <div className="selector"><div><b>{label}</b><span>{value}</span></div>{children}</div> }
 
 // ---------- internet & voice ----------
 function InternetPage({ go }: { go: Go }) {
   const { plans, setCart } = useApp()
-  return <><PageHero eyebrow="Home internet" title="Fast feels different." text="Reliable fibre, 5G and LTE internet for every home, every stream and every big idea." icon="wifi"/><section className="availability" id="availability"><div className="shell"><div><span className="eyebrow">Find your connection</span><h2>What's available at your address?</h2></div><SearchBar button="Check availability"/></div></section><section className="section shell"><SectionHead eyebrow="Choose your speed" title="Plans made for real life" text="Unlimited data, clear monthly pricing and everything you need to get online."/><div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">BEST VALUE</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>{zar(p.price)}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited usage</li><li><Icon name="check" size={17}/> Wi-Fi 6 router included</li><li><Icon name="check" size={17}/> Free setup</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose this plan</Button></article>)}</div></section><section className="section speed-guide"><div className="shell"><div><span className="eyebrow">Speed, explained</span><h2>How fast is fast enough?</h2><p>Your ideal speed depends on how many people and devices share your connection.</p></div><div className="speed-bars">{[['50 Mbps', 'Browsing & HD streaming', '45%'], ['200 Mbps', 'Families & 4K streaming', '72%'], ['500 Mbps', 'Gaming & connected homes', '100%']].map(([s, t, w]) => <article key={s}><div><b>{s}</b><span>{t}</span></div><i><em style={{ width: w }}/></i></article>)}</div></div></section><CtaBand title="A better Wi-Fi experience, included." text="Every fibre plan comes with a powerful Wi-Fi 6 router to cover more of your home." button="Check my address" onClick={() => go('internet', { anchor: 'availability' })}/></>
+  return <><PageHero eyebrow="Home internet" title="Fast feels different." text="Reliable fibre, 5G and LTE internet for every home, every stream and every big idea." icon="wifi"/><section className="availability" id="availability"><div className="shell"><div><span className="eyebrow">Find your connection</span><h2>What's available at your address?</h2></div><SearchBar button="Check availability"/></div></section><SpeedFinder plans={plans} onChoose={(id) => { setCart({ type: 'internet', planId: id }); go('checkout') }}/><section className="section shell"><SectionHead eyebrow="Choose your speed" title="Plans made for real life" text="Unlimited data, clear monthly pricing and everything you need to get online."/><div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">BEST VALUE</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>{zar(p.price)}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited usage</li><li><Icon name="check" size={17}/> Wi-Fi 6 router included</li><li><Icon name="check" size={17}/> Free setup</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose this plan</Button></article>)}</div></section><section className="section speed-guide"><div className="shell"><div><span className="eyebrow">Speed, explained</span><h2>How fast is fast enough?</h2><p>Your ideal speed depends on how many people and devices share your connection.</p></div><div className="speed-bars">{[['50 Mbps', 'Browsing & HD streaming', '45%'], ['200 Mbps', 'Families & 4K streaming', '72%'], ['500 Mbps', 'Gaming & connected homes', '100%']].map(([s, t, w]) => <article key={s}><div><b>{s}</b><span>{t}</span></div><i><em style={{ width: w }}/></i></article>)}</div></div></section><CtaBand title="A better Wi-Fi experience, included." text="Every fibre plan comes with a powerful Wi-Fi 6 router to cover more of your home." button="Check my address" onClick={() => go('internet', { anchor: 'availability' })}/></>
 }
 
 function VoicePage() {
@@ -686,7 +718,7 @@ export default function App() {
     <Loader/>
     <div className="scroll-progress" aria-hidden="true"/>
     {!standalone && <Header go={go}/>}
-    <div className="page-wrap" key={`${page}/${route.slug ?? ''}`}>
+    <div className="page-wrap" id="main" tabIndex={-1} key={`${page}/${route.slug ?? ''}`}>
       {page === 'home' ? <Home go={go}/> : page === 'phones' ? <PhonesPage go={go}/> : page === 'product' ? <ProductPage go={go}/> : page === 'internet' ? <InternetPage go={go}/> : page === 'voice' ? <VoicePage/> : page === 'checkout' ? <Checkout go={go}/> : page === 'account' ? <Account go={go}/> : <Support/>}
     </div>
     {!standalone && <Footer go={go}/>}
