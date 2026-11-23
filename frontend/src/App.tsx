@@ -19,6 +19,11 @@ export type CartItem = { type: 'phone'; slug: string; color: string; storage: st
   | { type: 'voip'; planId: string; users: number; number: { type: 'new'; areaCode: string } | { type: 'port'; portNumber: string } }
 type Toast = { id: number; text: string; kind: 'ok' | 'error' }
 
+// VINK Group parent site: injected by the server (VINK_GROUP_URL); falls back for local dev.
+const VINK_GROUP_URL = (() => {
+  const v = typeof document !== 'undefined' ? document.querySelector('meta[name="vink-group-url"]')?.getAttribute('content') : ''
+  return v && v.startsWith('http') ? v : 'https://vink-holding-frontend-production.up.railway.app'
+})()
 const megaFor = (p: string) => (p === 'phones' || p === 'internet' || p === 'voip' ? p : null) as 'phones' | 'internet' | 'voip' | null
 const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voip', 'voice', 'checkout', 'account', 'support']
 
@@ -157,6 +162,7 @@ function Header({ go }: { go: Go }) {
 
 function Footer({ go }: { go: Go }) {
   const { toast, openModal } = useApp()
+  const [vinkLogo, setVinkLogo] = useState(true)
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const subscribe = async (e: FormEvent) => {
@@ -177,7 +183,13 @@ function Footer({ go }: { go: Go }) {
       <div><h4>Help</h4><button onClick={() => go('support')}>Support centre</button><button onClick={() => go('home', { anchor: 'coverage' })}>Check coverage</button><button onClick={() => openModal('track')}>Track my order</button><button onClick={() => openModal('ticket')}>Contact us</button></div>
       <div><h4>Connectra</h4><button>About us</button><button>Careers</button><button>Our network</button><button>Newsroom</button></div>
     </div>
-    <div className="shell footer-division"><span className="fd-mark" aria-hidden="true">V</span><p>Connectra Telecom is a division of <b>VINK Group (Pty) Ltd</b>, registration number 2018/079316/07. Head office: Cape Town, South Africa.</p></div>
+    <div className="shell footer-division">
+      <a className="fd-logo" href={VINK_GROUP_URL} target="_blank" rel="noopener" aria-label="Visit the VINK Group website">
+        {vinkLogo ? <img src="/assets/vink-group-logo.png" alt="VINK Group" width={120} height={44} onError={() => setVinkLogo(false)}/> : <span className="fd-mark" aria-hidden="true">V</span>}
+      </a>
+      <p>Connectra Telecom is a division of <a href={VINK_GROUP_URL} target="_blank" rel="noopener"><b>VINK Group (Pty) Ltd</b></a>, registration number 2018/079316/07. Head office: Cape Town, South Africa.</p>
+      <a className="fd-visit" href={VINK_GROUP_URL} target="_blank" rel="noopener">Visit VINK Group <Icon name="arrow" size={15}/></a>
+    </div>
     <div className="shell footer-bottom"><span>© 2026 Connectra Telecom, a VINK Group company. All rights reserved. Prices in ZAR, VAT included.</span><span>Privacy · Terms · Accessibility · PAIA</span></div>
     <div className="footer-wordmark" aria-hidden="true"><span>Connectra</span></div>
   </footer>

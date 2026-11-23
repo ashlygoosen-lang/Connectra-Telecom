@@ -354,6 +354,14 @@ p { text-wrap: pretty; }
 .footer-division { display: flex; align-items: center; gap: 14px; padding: 22px 0; border-top: 1px solid rgba(255,255,255,.1); }
 .footer-division p { font-size: 12px; line-height: 1.6; color: #b3c0da; }
 .footer-division b { color: #fff; font-weight: 600; }
+.fd-logo { flex: none; display: grid; place-items: center; min-width: 34px; height: 44px; border-radius: 10px; transition: transform .4s var(--ease-out), opacity .3s; }
+.fd-logo:hover { transform: translateY(-2px); }
+.fd-logo img { height: 44px; width: auto; max-width: 140px; object-fit: contain; }
+.footer-division p a { color: inherit; }
+.footer-division p a:hover b { color: #f5d27a; text-decoration: underline; text-underline-offset: 3px; }
+.fd-visit { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(245,210,122,.35); color: #f5d27a; font-size: 12px; font-weight: 700; white-space: nowrap; transition: background .3s, color .3s, border-color .3s; }
+.fd-visit:hover { background: #f5d27a; color: #0a1a3f; border-color: #f5d27a; }
+@media (max-width: 760px) { .footer-division { flex-wrap: wrap; } .fd-visit { margin-left: 0; } }
 .fd-mark { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font: 800 16px 'Poppins', sans-serif; color: #0a1a3f; background: linear-gradient(135deg, #f5d27a, #c9962c); }
 
 @media (max-width: 900px) {

@@ -25,6 +25,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:'],
+      manifestSrc: ["'self'"],
       connectSrc: ["'self'"],
     },
   },
@@ -36,10 +37,30 @@ app.use(express.json({ limit: '50kb' }))
 app.use('/api', api)
 app.use('/api', (_req, res) => res.status(404).json({ ok: false, error: 'Not found' }))
 
+// Public site address, used for absolute URLs Google needs (logo, canonical, social image).
+// Set SITE_URL in production (e.g. https://connectra.co.za); otherwise it is taken from the request.
+const VINK_GROUP_URL = process.env.VINK_GROUP_URL || 'https://vink-holding-frontend-production.up.railway.app'
+const siteUrl = (req) => (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '')
+
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${siteUrl(req)}/sitemap.xml\n`))
+app.get('/sitemap.xml', (req, res) => {
+  const base = siteUrl(req)
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url></urlset>\n`)
+})
+
 if (fs.existsSync(DIST)) {
-  app.use('/assets', express.static(path.join(DIST, 'assets'), { maxAge: '1y', immutable: true }))
-  app.use(express.static(DIST, { maxAge: '1h', index: false }))
-  app.get(/.*/, (_req, res) => res.sendFile(path.join(DIST, 'index.html')))
+  const template = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8')
+  const escapeAttr = (v) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+  const renderIndex = (req, res) => {
+    res.set('Cache-Control', 'no-cache')
+    res.type('html').send(template.replaceAll('%SITE_URL%', escapeAttr(siteUrl(req))).replaceAll('%VINK_GROUP_URL%', escapeAttr(VINK_GROUP_URL)))
+  }
+  app.get(['/', '/index.html'], renderIndex)
+  app.use('/assets', express.static(path.join(DIST, 'assets'), { maxAge: '30d' }))
+  app.use(express.static(DIST, { maxAge: '1d', index: false }))
+  // Missing files (e.g. an image not uploaded yet) get a real 404, not the app shell.
+  app.get(/\.[a-z0-9]{2,5}$/i, (_req, res) => res.status(404).end())
+  app.get(/.*/, renderIndex)
 } else {
   app.get('/', (_req, res) => res.send('Connectra API is running. Build the frontend (npm run build) to serve the site.'))
 }

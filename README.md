@@ -27,7 +27,7 @@ Demo account: `demo@connectra.africa` / `Connectra2026!` (set `SEED_DEMO=false` 
 
 1. Push this folder to GitHub and create a Railway service from the repo (root directory = repo root).
 2. Railway uses `railway.json`: build `npm run build`, start `npm start`, health check `/api/health`.
-3. Set variables: `JWT_SECRET` (long random string), `ADMIN_KEY` (for `/api/admin/summary`), optionally `CORS_ORIGIN`.
+3. Set variables: `JWT_SECRET` (long random string), `ADMIN_KEY` (for `/api/admin/summary`), `SITE_URL` (the public address, e.g. `https://connectra.co.za`, used for the Google logo, canonical link and share image), `VINK_GROUP_URL` (the VINK Group website the footer links to), optionally `CORS_ORIGIN`.
 4. To keep data across deploys, add a Volume mounted at `/data` and set `DATA_DIR=/data`.
 
 ## API
@@ -55,6 +55,16 @@ Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DI
 **Currency:** all prices and payments are South African Rand (ZAR), VAT inclusive, formatted the South African way (R1 099 / R1 099,00). Orders store `currency: "ZAR"`.
 
 **Still to connect for production:** a South African payment gateway such as PayFast, Yoco, Peach Payments or Paystack, charging in ZAR (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
+
+## Logo in Google & branding
+
+- Favicon set (`favicon.ico` 16/32/48, `favicon.svg`, 48/96/192/512 PNGs, Apple touch icon, maskable icon, `site.webmanifest`), built from the Connectra logo mark. Google shows this favicon beside search results.
+- `Organization` + `WebSite` structured data with `logo` → `/assets/connectra-logo.png` (512×512), and VINK Group as `parentOrganization`. The server fills in absolute URLs from `SITE_URL`.
+- Social share card `/assets/og-image.jpg` (1200×630) for WhatsApp, Facebook, LinkedIn and X.
+- `/robots.txt` and `/sitemap.xml` are generated with the live address.
+- **VINK Group logo in the footer:** add the official logo as `frontend/public/assets/vink-group-logo.png` (transparent PNG, about 44px high when shown). Until then a gold "V" badge is shown. Logo and text link to `VINK_GROUP_URL`.
+
+After going live: add the site to Google Search Console, submit `/sitemap.xml` and request indexing of the home page. Google usually picks up the favicon and logo within days to a few weeks.
 
 ## Connectra Voice (VoIP) — `frontend/src/voip.tsx`
 
