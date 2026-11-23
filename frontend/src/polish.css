@@ -10,6 +10,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 p { text-wrap: pretty; }
 .deal-price b, .plan-price b, .phone-bottom b, .big-price, .summary b, .order-summary b, .cart-item > b, .sf-price b, .mega-plan span, .mega-meta span { font-variant-numeric: tabular-nums; }
 .skip-link { position: fixed; top: 10px; left: 10px; z-index: 300; padding: 10px 16px; border-radius: 10px; background: #0a1a3f; color: #fff; font: 600 13px 'Inter', sans-serif; transform: translateY(-160%); transition: transform .3s; }
+.skip-link:not(:focus) { opacity: 0; pointer-events: none; clip-path: inset(50%); }
 .skip-link:focus { transform: none; }
 .page-wrap:focus { outline: none; }
 
@@ -245,4 +246,130 @@ p { text-wrap: pretty; }
   .device-360 small { display: none; }
   .pm-time { font-size: 20px; }
   .footer-bottom span { display: block; }
+}
+
+/* ==========================================================================
+   Connectra Voice (VoIP)
+   ========================================================================== */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.voip-perks { border-bottom: 1px solid var(--line); background: #fff; }
+.voip-perks .shell { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; padding: 34px 0; }
+.voip-perks article { display: flex; gap: 14px; align-items: flex-start; }
+.voip-perks article > span { flex: none; width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; color: #0b5fff; background: #edf3ff; }
+.voip-perks h3 { font-size: 14px; margin-bottom: 4px; }
+.voip-perks p { font-size: 12px; line-height: 1.55; color: #6d788c; }
+
+.voip-grid .plan-card ul { min-height: 190px; }
+
+.voip-how ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; counter-reset: s; position: relative; }
+.voip-how ol::before { content: ''; position: absolute; top: 34px; left: 12%; right: 12%; height: 2px; background: repeating-linear-gradient(90deg, #cfdcf3 0 8px, transparent 8px 16px); }
+.voip-how li { position: relative; text-align: center; }
+.voip-step { position: relative; width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 22px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #0b5fff, #19d3e6); box-shadow: 0 16px 30px -12px rgba(11,95,255,.55); }
+.voip-step em { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #ff7a1a; color: #fff; font: 700 12px 'Poppins', sans-serif; font-style: normal; border: 3px solid #fff; }
+.voip-how h3 { font-size: 18px; margin-bottom: 8px; }
+.voip-how p { font-size: 13px; line-height: 1.6; color: #6d788c; max-width: 300px; margin: 0 auto; }
+
+.voip-rates-wrap { background: #0a1a3f; color: #9fb0d1; }
+.voip-rates { display: grid; grid-template-columns: .9fr 1.1fr; gap: 80px; align-items: center; }
+.voip-rates h2 { color: #fff; font-size: 36px; line-height: 1.15; margin: 10px 0 14px; }
+.voip-rates p { line-height: 1.65; }
+.voip-rates table { width: 100%; border-collapse: separate; border-spacing: 0; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; overflow: hidden; }
+.voip-rates th, .voip-rates td { padding: 18px 24px; text-align: left; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.voip-rates thead th { font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #83f2fb; font-weight: 800; }
+.voip-rates tbody th { color: #fff; font-weight: 600; }
+.voip-rates td { text-align: right; color: #fff; font: 700 18px 'Poppins', sans-serif; font-variant-numeric: tabular-nums; }
+.voip-rates td.free { color: #4ade80; }
+.voip-rates tbody tr { transition: background .3s; }
+.voip-rates tbody tr:hover { background: rgba(25,211,230,.06); }
+.voip-rates tfoot td { text-align: left; font: 400 11px/1.6 'Inter', sans-serif; color: #8193b8; border-bottom: 0; }
+
+.voip-business { display: grid; grid-template-columns: 1.3fr .7fr; gap: 60px; align-items: start; }
+.vb-copy h2 { font-size: 36px; line-height: 1.15; margin: 10px 0 14px; }
+.vb-copy > p { color: #68758b; line-height: 1.65; max-width: 600px; }
+.vb-features { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 30px 0; }
+.vb-features article { display: flex; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; transition: border-color .3s, box-shadow .35s, transform .45s var(--ease-out); }
+.vb-features article:hover { border-color: #cfdcf3; box-shadow: var(--shadow); transform: translateY(-3px); }
+.vb-features article > span { flex: none; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: #ff7a1a; background: #fff0e6; }
+.vb-features h3 { font-size: 14px; margin-bottom: 4px; }
+.vb-features p { font-size: 12px; line-height: 1.5; color: #6d788c; }
+.vb-form { position: sticky; top: 100px; display: grid; gap: 14px; padding: 28px; border-radius: 22px; background: linear-gradient(160deg, #0a1a3f, #0d2a63); color: #aebddd; box-shadow: 0 30px 60px -25px rgba(10,26,63,.5); }
+.vb-form h3 { color: #fff; font-size: 22px; }
+.vb-form p { font-size: 12px; line-height: 1.55; }
+.vb-form label { display: grid; gap: 6px; font-size: 11px; font-weight: 700; color: #fff; }
+.vb-form input, .vb-form select { border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 12px; background: rgba(255,255,255,.06); color: #fff; font-size: 13px; outline: none; }
+.vb-form select option { color: #0a1a3f; }
+.vb-form input:focus, .vb-form select:focus { border-color: #19d3e6; box-shadow: 0 0 0 4px rgba(25,211,230,.15); }
+
+.ce-label { position: relative; display: block; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #83f2fb; margin-bottom: 18px; }
+.ce-bars { position: relative; display: grid; gap: 18px; }
+.ce-bars > div { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-items: center; }
+.ce-bars span { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c4d2ee; }
+.ce-bars span b { color: #fff; font-weight: 600; }
+.ce-bars span em { font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; background: #19d3e6; color: #0a1a3f; }
+.ce-bars i { grid-column: 1 / -1; grid-row: 2; height: 10px; border-radius: 10px; background: #1b2f5d; overflow: hidden; }
+.ce-bars i em { display: block; height: 100%; border-radius: inherit; background: #3b5389; transition: width .7s var(--ease-out); }
+.ce-bars .best i em { background: linear-gradient(90deg, #0b5fff, #19d3e6); box-shadow: 0 0 14px rgba(25,211,230,.5); }
+.ce-bars strong { grid-column: 2; grid-row: 1; color: #fff; font: 700 18px 'Poppins', sans-serif; font-variant-numeric: tabular-nums; }
+.ce-note { position: relative; margin-top: 16px; font-size: 10px; color: #7487ad; }
+
+.voip-config .vc-users { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #0a1a3f; }
+.stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stepper button { width: 40px; height: 40px; font-size: 18px; color: #0b5fff; }
+.stepper button:hover { background: #f0f5ff; }
+.stepper input { width: 56px; text-align: center; border: 0 !important; border-inline: 1px solid var(--line) !important; border-radius: 0 !important; font-weight: 700; color: #0a1a3f !important; padding: 10px 4px !important; }
+.vc-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vc-choice button { display: grid; gap: 3px; text-align: left; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; transition: border-color .25s, background .25s, box-shadow .25s; }
+.vc-choice button b { color: #0a1a3f; font-size: 13px; }
+.vc-choice button small { color: #7c879a; font-size: 11px; }
+.vc-choice button.on { border-color: #0b5fff; background: #f5f9ff; box-shadow: 0 0 0 4px rgba(11,95,255,.08); }
+.vc-total { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px; border-radius: 14px; background: #f4f7fc; font-size: 12px; font-weight: 600; }
+.vc-total b { color: #0a1a3f; font: 700 24px 'Poppins', sans-serif; font-variant-numeric: tabular-nums; }
+.vc-total small { font: 500 11px 'Inter', sans-serif; color: #7c879a; }
+
+/* Home VoIP band */
+.voip-band { position: relative; overflow: hidden; display: grid; grid-template-columns: 1.1fr .9fr; gap: 50px; align-items: center; margin-block: 100px 0; padding: 58px 64px; border-radius: 26px; color: #b9c8e8; background: radial-gradient(70% 90% at 100% 0%, rgba(25,211,230,.22), transparent 60%), linear-gradient(120deg, #0a1a3f 45%, #0f3a8e); }
+.vband-copy h2 { color: #fff; font-size: 36px; line-height: 1.15; margin: 10px 0 14px; }
+.vband-copy p { max-width: 520px; line-height: 1.65; }
+.vband-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.vband-ghost { color: #fff !important; border-color: rgba(255,255,255,.3) !important; }
+.vband-ghost:hover { background: rgba(255,255,255,.08) !important; }
+.vband-visual { position: relative; display: grid; gap: 14px; }
+.vcall { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 18px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(10px); }
+.vcall-avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font: 700 13px 'Poppins', sans-serif; color: #0a1a3f; background: linear-gradient(135deg, #19d3e6, #8be9f5); }
+.vcall b { display: block; color: #fff; font-size: 13px; }
+.vcall small { font-size: 11px; color: #83f2fb; }
+.vcall > div { flex: 1; }
+.vcall-end { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #22c55e; color: #fff; }
+.vwave { display: flex; align-items: center; gap: 4px; height: 70px; padding: 0 6px; }
+.vwave i { flex: 1; height: var(--h); border-radius: 4px; background: linear-gradient(180deg, #19d3e6, #0b5fff); transform-origin: center; }
+.motion-ok .vwave i { animation: wave 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * -70ms); }
+@keyframes wave { 50% { transform: scaleY(.35); opacity: .6; } }
+.vstat { justify-self: end; padding: 12px 16px; border-radius: 14px; background: #fff; color: #0a1a3f; box-shadow: 0 20px 40px -15px rgba(0,0,0,.4); }
+.vstat b { display: block; font: 700 22px 'Poppins', sans-serif; }
+.vstat small { font-size: 10px; color: #68758b; }
+.motion-ok .vstat { animation: float 5s ease-in-out infinite; }
+
+/* VINK Group division line */
+.footer-division { display: flex; align-items: center; gap: 14px; padding: 22px 0; border-top: 1px solid rgba(255,255,255,.1); }
+.footer-division p { font-size: 12px; line-height: 1.6; color: #b3c0da; }
+.footer-division b { color: #fff; font-weight: 600; }
+.fd-mark { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font: 800 16px 'Poppins', sans-serif; color: #0a1a3f; background: linear-gradient(135deg, #f5d27a, #c9962c); }
+
+@media (max-width: 900px) {
+  .voip-perks .shell { grid-template-columns: 1fr 1fr; }
+  .voip-rates, .voip-business, .voip-band { grid-template-columns: 1fr; gap: 36px; }
+  .vb-form { position: static; }
+}
+@media (max-width: 760px) {
+  .voip-perks .shell { grid-template-columns: 1fr; gap: 18px; padding: 26px 0; }
+  .voip-how ol { grid-template-columns: 1fr; gap: 34px; }
+  .voip-how ol::before { display: none; }
+  .voip-rates h2, .vb-copy h2, .vband-copy h2 { font-size: 28px; }
+  .voip-rates th, .voip-rates td { padding: 14px 16px; font-size: 13px; }
+  .voip-rates td { font-size: 15px; }
+  .vb-features { grid-template-columns: 1fr; }
+  .voip-band { margin: 68px 16px 0; padding: 36px 24px; }
+  .voip-grid .plan-card ul { min-height: 0; }
+  .vc-choice { grid-template-columns: 1fr; }
 }

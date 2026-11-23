@@ -57,6 +57,30 @@ export const internetPlans = [
   { id: 'fibre-max', name: 'Fibre Max', speed: '500 Mbps', mbps: 500, price: 1199, note: 'Built for everything' },
 ]
 
+// Voice over Internet (VoIP). Rates per minute, billed per second, ZAR incl. VAT.
+export const voipRates = { connectra: 0, landline: 0.35, mobile: 0.45, internationalFrom: 0.49 }
+export const voipAreaCodes = [
+  { code: '021', area: 'Cape Town' }, { code: '011', area: 'Johannesburg' }, { code: '012', area: 'Pretoria' },
+  { code: '031', area: 'Durban' }, { code: '041', area: 'Gqeberha' }, { code: '051', area: 'Bloemfontein' }, { code: '087', area: 'National (any area)' },
+]
+export const voipPlans = [
+  {
+    id: 'voip-flex', name: 'Voice Flex', audience: 'home', price: 29, perUser: false,
+    note: 'Pay only for the calls you make',
+    includes: ['Free landline number (new or ported)', 'Landlines 35c/min, mobiles 45c/min', 'Free calls to other Connectra numbers', 'Voicemail to email', 'Per-second billing'],
+  },
+  {
+    id: 'voip-home', name: 'Home Unlimited', audience: 'home', price: 199, perUser: false, popular: true,
+    note: 'Unlimited local calling for the household',
+    includes: ['Unlimited calls to SA landlines', '500 minutes to SA mobiles', 'Free calls to other Connectra numbers', 'Use your existing phone or our app', 'Voicemail to email'],
+  },
+  {
+    id: 'voip-business', name: 'Cloud PBX', audience: 'business', price: 149, perUser: true,
+    note: 'A full business phone system in the cloud',
+    includes: ['Extension per user + free internal calls', '250 local minutes per user', 'Auto attendant (IVR) and hunt groups', 'Call recording and reporting', 'Desk phone, desktop and mobile apps'],
+  },
+]
+
 export const deals = [
   { id: 'sim-unlimited', type: 'SIM ONLY', title: 'Unlimited everything.', price: 599, text: 'Calls, texts and 5G data. No limits, no slowdowns.' },
   { id: 'iphone-16-pro-50', type: 'MOST POPULAR', title: '50GB 5G data', phone: 'iphone-16-pro', price: 1099, upfront: 999, term: 36 },
@@ -65,7 +89,7 @@ export const deals = [
 
 export const businessSolutions = [
   { id: 'business-mobile', icon: 'phone', title: 'Business mobile', text: 'Flexible team plans with shared data, simple admin and the latest devices.' },
-  { id: 'cloud-voice', icon: 'headset', title: 'Cloud voice', text: 'A professional phone system in the cloud. Keep every team member connected.' },
+  { id: 'cloud-voice', icon: 'call', title: 'Cloud voice (VoIP)', text: 'A professional phone system in the cloud. Keep every team member connected.' },
   { id: 'business-internet', icon: 'wifi', title: 'Business internet', text: 'Priority support and resilient fibre with speeds up to 1 Gbps.' },
 ]
 
@@ -83,6 +107,7 @@ export const supportTopics = [
   { id: 'account', icon: 'user', title: 'Account & app', text: 'Manage your details and plan' },
   { id: 'security', icon: 'shield', title: 'Safety & security', text: 'Keep your account protected' },
   { id: 'orders', icon: 'help', title: 'Orders & delivery', text: 'Track or change an order' },
+  { id: 'voip', icon: 'call', title: 'VoIP & landline', text: 'Set up calls over the internet' },
 ]
 
 export const supportArticles = [
@@ -95,5 +120,9 @@ export const supportArticles = [
   { id: 'understand-bill', topic: 'billing', title: 'Understand my bill', body: 'Your bill shows your monthly plan, any once-off charges and the period covered. No hidden fees, ever.' },
   { id: 'reset-password', topic: 'account', title: 'Reset my password', body: 'Choose "Forgot password" on the login screen and follow the link we email you.' },
   { id: 'sim-swap-fraud', topic: 'security', title: 'Protect against SIM-swap fraud', body: 'We never ask for your PIN by phone. Enable SIM-swap alerts in the app for extra protection.' },
+  { id: 'voip-setup', topic: 'voip', title: 'Set up my VoIP line', body: 'Plug the adapter into your router and your phone into the adapter, or sign in to the Connectra Voice app with the details we email you. Your line is live within minutes.' },
+  { id: 'voip-port', topic: 'voip', title: 'Move my landline number to VoIP', body: 'Choose "Keep my number" when you order. We handle the port with your current provider, which usually takes 3 to 5 working days. Your old line keeps working until the move is complete.' },
+  { id: 'voip-quality', topic: 'voip', title: 'Improve VoIP call quality', body: 'Each call needs about 100 kbps. Use a wired connection or 5GHz Wi-Fi, and keep your router on a UPS so calls continue during load-shedding.' },
+  { id: 'voip-emergency', topic: 'voip', title: 'Emergency calls on VoIP', body: 'VoIP needs power and internet to work. During an outage, use a mobile phone to call 112 or 10111.' },
   { id: 'track-order', topic: 'orders', title: 'Track my order', body: 'Use your order reference (e.g. CN-AB12CD) on the order tracker, or find it under My Account → Orders.' },
 ]

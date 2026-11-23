@@ -2,27 +2,31 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutE
 import type { CSSProperties, FormEvent, ReactNode, PointerEvent as RPointerEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { api, tokenStore } from './api'
-import type { Article, CoverageResult, InternetPlan, OrderSummary, Phone, User } from './api'
-import { fallbackPhones, fallbackPlans, faqs as faqData, supportTopics } from './data'
+import type { Article, CoverageResult, InternetPlan, OrderSummary, Phone, User, VoipPlan } from './api'
+import { fallbackPhones, fallbackPlans, fallbackVoip, voipAreaCodes, faqs as faqData, supportTopics } from './data'
 import { reducedMotion, startMotion, transition } from './motion'
 import { CoverageMap, SpeedFinder, MegaMenu } from './showcase'
+import { VoipPage } from './voip'
 
 // All prices are South African Rand, VAT inclusive (en-ZA formatting: R1 099 / R1 099,00).
 const zar = (n: number, cents = false) => `R${n.toLocaleString('en-ZA', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 })}`
 const DATA_BUNDLES: [number, number][] = [[1, 85], [5, 229], [10, 349], [20, 499]]
 
-type Page = 'home' | 'phones' | 'product' | 'internet' | 'voice' | 'checkout' | 'account' | 'support'
+type Page = 'home' | 'phones' | 'product' | 'internet' | 'voip' | 'voice' | 'checkout' | 'account' | 'support'
 type Route = { page: Page; slug?: string }
 type GoOptions = { slug?: string; anchor?: string }
-type CartItem = { type: 'phone'; slug: string; color: string; storage: string; term: number } | { type: 'internet'; planId: string }
+export type CartItem = { type: 'phone'; slug: string; color: string; storage: string; term: number } | { type: 'internet'; planId: string }
+  | { type: 'voip'; planId: string; users: number; number: { type: 'new'; areaCode: string } | { type: 'port'; portNumber: string } }
 type Toast = { id: number; text: string; kind: 'ok' | 'error' }
 
-const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voice', 'checkout', 'account', 'support']
+const megaFor = (p: string) => (p === 'phones' || p === 'internet' || p === 'voip' ? p : null) as 'phones' | 'internet' | 'voip' | null
+const PAGES: Page[] = ['home', 'phones', 'product', 'internet', 'voip', 'voice', 'checkout', 'account', 'support']
 
 const navItems: [string, Page, string?][] = [
   ['Mobile Contracts', 'phones'],
   ['Home Internet', 'internet'],
-  ['Voice & Business', 'voice'],
+  ['VoIP', 'voip'],
+  ['Business', 'voice'],
   ['Deals', 'home', 'deals'],
   ['Support', 'support'],
 ]
@@ -33,13 +37,14 @@ type Ctx = {
   go: (p: Page, o?: GoOptions) => void
   phones: Phone[]
   plans: InternetPlan[]
+  voip: VoipPlan[]
   cart: CartItem | null
   setCart: (c: CartItem) => void
   toast: (text: string, kind?: 'ok' | 'error') => void
   openModal: (m: 'ticket' | 'track' | null) => void
 }
 const AppCtx = createContext<Ctx>(null!)
-const useApp = () => useContext(AppCtx)
+export const useApp = () => useContext(AppCtx)
 type Go = Ctx['go']
 
 const monthlyFor = (phone: Phone, storage: string, term: number) => phone.price + (phone.storage.find(s => s.size === storage)?.add ?? 0) + (term === 24 ? 200 : 0)
@@ -74,6 +79,8 @@ export function Icon({ name, size = 22 }: { name: string; size?: number }) {
     help: <><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 3.4 2.5c-.9.4-.9 1.2-.9 2M12 17h.01"/></>,
     bill: <><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h3"/></>,
     logout: <><path d="M15 4h4v16h-4M10 17l5-5-5-5M15 12H3"/></>,
+    call: <path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>,
+    globe: <><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></>,
   }
   return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>
 }
@@ -83,7 +90,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
 }
 
 type ButtonProps = { children: ReactNode; variant?: 'primary' | 'outline' | 'dark' | 'ghost'; onClick?: () => void; className?: string; type?: 'button' | 'submit'; loading?: boolean; disabled?: boolean }
-function Button({ children, variant = 'primary', onClick, className = '', type = 'button', loading, disabled }: ButtonProps) {
+export function Button({ children, variant = 'primary', onClick, className = '', type = 'button', loading, disabled }: ButtonProps) {
   return <button type={type} onClick={onClick} disabled={disabled || loading} aria-busy={loading || undefined} className={`btn btn-${variant} ${className}`}>{loading ? <><span className="spin" aria-hidden="true"/> Please wait</> : children}</button>
 }
 
@@ -92,7 +99,7 @@ function SplitLine({ text, start }: { text: string; start: number }) {
   return <span className="line">{words.map((w, i) => <Fragment key={i}><span className="w"><span style={{ '--wi': start + i } as CSSProperties}>{w}</span></span>{i < words.length - 1 ? ' ' : ''}</Fragment>)}</span>
 }
 
-function Modal({ title, text, onClose, children }: { title: string; text?: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, text, onClose, children }: { title: string; text?: string; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const close = useRef(onClose)
   close.current = onClose
@@ -110,7 +117,7 @@ function Modal({ title, text, onClose, children }: { title: string; text?: strin
 
 // ---------- layout ----------
 function Header({ go }: { go: Go }) {
-  const { route, phones, plans } = useApp()
+  const { route, phones, plans, voip } = useApp()
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState<string | null>(null)
   const navRef = useRef<HTMLElement>(null)
@@ -127,16 +134,16 @@ function Header({ go }: { go: Go }) {
   useLayoutEffect(() => { place(); addEventListener('resize', place); return () => removeEventListener('resize', place) }, [place])
 
   const nav = (page: Page, anchor?: string) => { go(page, { anchor }); setOpen(false); setMega(null) }
-  const [mega, setMega] = useState<'phones' | 'internet' | null>(null)
+  const [mega, setMega] = useState<'phones' | 'internet' | 'voip' | null>(null)
   const megaTimer = useRef<number>(0)
-  const openMega = (m: 'phones' | 'internet' | null) => { clearTimeout(megaTimer.current); setMega(m) }
+  const openMega = (m: 'phones' | 'internet' | 'voip' | null) => { clearTimeout(megaTimer.current); setMega(m) }
   const closeMega = () => { clearTimeout(megaTimer.current); megaTimer.current = window.setTimeout(() => setMega(null), 160) }
   useEffect(() => { setMega(null) }, [route.page, route.slug])
   return <header className="header" onMouseLeave={closeMega} onKeyDown={e => e.key === 'Escape' && setMega(null)}>
     <div className="nav shell">
       <Logo onClick={() => nav('home')}/>
       <nav ref={navRef} className={open ? 'nav-links open' : 'nav-links'} onMouseLeave={() => setHover(null)} aria-label="Main">
-        {navItems.map(([label, page, anchor]) => <button key={label} data-label={label} className={label === active ? 'current' : ''} aria-current={label === active ? 'page' : undefined} onMouseEnter={() => { setHover(label); openMega(page === 'phones' ? 'phones' : page === 'internet' ? 'internet' : null) }} onFocus={() => openMega(page === 'phones' ? 'phones' : page === 'internet' ? 'internet' : null)} aria-haspopup={page === 'phones' || page === 'internet' ? 'true' : undefined} aria-expanded={page === 'phones' ? mega === 'phones' : page === 'internet' ? mega === 'internet' : undefined} onClick={() => nav(page, anchor)}>{label}</button>)}
+        {navItems.map(([label, page, anchor]) => <button key={label} data-label={label} className={label === active ? 'current' : ''} aria-current={label === active ? 'page' : undefined} onMouseEnter={() => { setHover(label); openMega(megaFor(page)) }} onFocus={() => openMega(megaFor(page))} aria-haspopup={megaFor(page) ? 'true' : undefined} aria-expanded={megaFor(page) ? mega === megaFor(page) : undefined} onClick={() => nav(page, anchor)}>{label}</button>)}
         <button data-label="Coverage" onMouseEnter={() => { setHover('Coverage'); openMega(null) }} onClick={() => nav('home', 'coverage')}>Coverage</button>
         <div className="mobile-actions"><Button variant="outline" onClick={() => nav('account')}>Log in</Button><Button onClick={() => nav('phones')}>Get connected</Button></div>
         <span className="nav-indicator" aria-hidden="true"/>
@@ -144,7 +151,7 @@ function Header({ go }: { go: Go }) {
       <div className="nav-actions"><Button variant="ghost" onClick={() => go('account')}><Icon name="user" size={18}/> Log in</Button><Button onClick={() => go('phones')}>Get connected</Button></div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Toggle menu" aria-expanded={open}><Icon name={open ? 'close' : 'menu'}/></button>
     </div>
-    <MegaMenu phones={phones} plans={plans} open={mega} onEnter={() => openMega(mega)} onLeave={closeMega} go={(p, slug) => { go(p as Page, { slug }); setMega(null) }}/>
+    <MegaMenu phones={phones} plans={plans} voip={voip} open={mega} onEnter={() => openMega(mega)} onLeave={closeMega} go={(p, slug) => { go(p as Page, { slug }); setMega(null) }}/>
   </header>
 }
 
@@ -166,11 +173,12 @@ function Footer({ go }: { go: Go }) {
     </div>
     <div className="shell footer-grid">
       <div className="footer-brand"><Logo onClick={() => go('home')}/><p>Bringing people closer with reliable, affordable connections.</p><div className="socials"><span>in</span><span>f</span><span>ig</span><span>𝕏</span></div></div>
-      <div><h4>Services</h4><button onClick={() => go('phones')}>Mobile contracts</button><button onClick={() => go('internet')}>Home internet</button><button onClick={() => go('voice')}>Voice & business</button><button onClick={() => go('home', { anchor: 'deals' })}>SIM-only plans</button></div>
+      <div><h4>Services</h4><button onClick={() => go('phones')}>Mobile contracts</button><button onClick={() => go('internet')}>Home internet</button><button onClick={() => go('voip')}>VoIP calling</button><button onClick={() => go('voice')}>Voice & business</button><button onClick={() => go('home', { anchor: 'deals' })}>SIM-only plans</button></div>
       <div><h4>Help</h4><button onClick={() => go('support')}>Support centre</button><button onClick={() => go('home', { anchor: 'coverage' })}>Check coverage</button><button onClick={() => openModal('track')}>Track my order</button><button onClick={() => openModal('ticket')}>Contact us</button></div>
       <div><h4>Connectra</h4><button>About us</button><button>Careers</button><button>Our network</button><button>Newsroom</button></div>
     </div>
-    <div className="shell footer-bottom"><span>© 2026 Connectra Telecom. All rights reserved. Prices in ZAR, VAT included.</span><span>Privacy · Terms · Accessibility · PAIA</span></div>
+    <div className="shell footer-division"><span className="fd-mark" aria-hidden="true">V</span><p>Connectra Telecom is a division of <b>VINK Group (Pty) Ltd</b>, registration number 2018/079316/07. Head office: Cape Town, South Africa.</p></div>
+    <div className="shell footer-bottom"><span>© 2026 Connectra Telecom, a VINK Group company. All rights reserved. Prices in ZAR, VAT included.</span><span>Privacy · Terms · Accessibility · PAIA</span></div>
     <div className="footer-wordmark" aria-hidden="true"><span>Connectra</span></div>
   </footer>
 }
@@ -214,7 +222,7 @@ function SearchBar({ placeholder = 'Enter your address or postcode', button = 'C
   </div>
 }
 
-function SectionHead({ eyebrow, title, text, action, onAction }: { eyebrow: string; title: string; text?: string; action?: string; onAction?: () => void }) {
+export function SectionHead({ eyebrow, title, text, action, onAction }: { eyebrow: string; title: string; text?: string; action?: string; onAction?: () => void }) {
   return <div className="section-head"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2>{text && <p>{text}</p>}</div>{action && <button className="text-link" onClick={onAction}>{action} <Icon name="arrow" size={18}/></button>}</div>
 }
 
@@ -278,6 +286,16 @@ function Home({ go }: { go: Go }) {
     <section className="section internet-compare">
       <div className="shell"><SectionHead eyebrow="Home internet" title="Speed that fits your life" text="Every plan comes with unlimited usage, free installation and a Wi-Fi 6 router."/>
         <div className="plan-grid">{plans.map(p => <article className={`plan-card ${p.popular ? 'recommended' : ''}`} key={p.name}>{p.popular && <span className="recommend-label">RECOMMENDED</span>}<div className="plan-icon"><Icon name="wifi"/></div><span className="muted-label">{p.name}</span><h3>{p.speed}</h3><p>{p.note}</p><div className="plan-price"><b>{zar(p.price)}</b><span>/month</span></div><ul><li><Icon name="check" size={17}/> Unlimited data</li><li><Icon name="check" size={17}/> Free Wi-Fi 6 router</li><li><Icon name="check" size={17}/> Free installation</li></ul><Button variant={p.popular ? 'primary' : 'outline'} onClick={() => { setCart({ type: 'internet', planId: p.id }); go('checkout') }}>Choose plan</Button></article>)}</div>
+      </div>
+    </section>
+
+    <section className="shell voip-band">
+      <div className="vband-copy"><span className="eyebrow light">New · Connectra Voice</span><h2>Your landline, reinvented over the internet.</h2><p>Keep your number, call in HD from any device and pay from R29 a month. For homes and businesses of every size.</p>
+        <div className="vband-actions"><Button onClick={() => go('voip')}>Explore VoIP plans <Icon name="arrow" size={18}/></Button><Button variant="ghost" className="vband-ghost" onClick={() => go('voice')}>Business phone systems</Button></div></div>
+      <div className="vband-visual" aria-hidden="true">
+        <div className="vcall"><span className="vcall-avatar">TK</span><div><b>Thabo · 021 555 0194</b><small>HD Voice · 04:12</small></div><span className="vcall-end"><Icon name="call" size={16}/></span></div>
+        <div className="vwave">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ '--h': `${20 + Math.round(Math.abs(Math.sin(i * 1.7)) * 70)}%`, '--i': i } as CSSProperties}/>)}</div>
+        <div className="vstat"><b>R0,35</b><small>per min to landlines</small></div>
       </div>
     </section>
 
@@ -351,7 +369,7 @@ function PhonesPage({ go }: { go: Go }) {
     </main><CtaBand title="Not sure which phone is right?" text="Answer a few quick questions and we'll help you find your perfect match." button="Find my phone" onClick={() => go('home', { anchor: 'deals' })}/></>
 }
 
-function PageHero({ eyebrow, title, text, icon }: { eyebrow: string; title: string; text: string; icon: string }) {
+export function PageHero({ eyebrow, title, text, icon }: { eyebrow: string; title: string; text: string; icon: string }) {
   return <section className="page-hero"><div className="shell"><div><span className="eyebrow light">{eyebrow}</span><h1>{title}</h1><p>{text}</p></div><span className="page-hero-icon"><Icon name={icon} size={80}/></span></div></section>
 }
 
@@ -404,7 +422,7 @@ function InternetPage({ go }: { go: Go }) {
 }
 
 function VoicePage() {
-  const { toast } = useApp()
+  const { toast, go } = useApp()
   const [email, setEmail] = useState('')
   const [size, setSize] = useState('1–10 employees')
   const [solution, setSolution] = useState('')
@@ -418,12 +436,12 @@ function VoicePage() {
     catch (err) { toast((err as Error).message, 'error') }
     finally { setLoading(false) }
   }
-  return <><PageHero eyebrow="Voice & business" title="Clearer conversations. Smarter business." text="Flexible voice solutions and connected tools that help your team work better, wherever business takes you." icon="building"/><section className="section shell"><SectionHead eyebrow="Solutions that scale" title="Built around your business"/><div className="business-grid">{[['phone', 'Business mobile', 'Flexible team plans with shared data, simple admin and the latest devices.'], ['headset', 'Cloud voice', 'A professional phone system in the cloud. Keep every team member connected.'], ['wifi', 'Business internet', 'Priority support and resilient fibre with speeds up to 1 Gbps.']].map(([i, t, d]) => <article key={t}><span><Icon name={i} size={30}/></span><h3>{t}</h3><p>{d}</p><ul><li><Icon name="check" size={16}/> Simple monthly billing</li><li><Icon name="check" size={16}/> Dedicated support</li><li><Icon name="check" size={16}/> Scale anytime</li></ul><Button variant="outline" onClick={() => pick(t)}>Learn more</Button></article>)}</div></section><section className="business-quote"><div className="shell"><div><span className="eyebrow light">Let's talk business</span><h2>Tell us where you're going.<br/>We'll help you connect the way.</h2><p>Our connectivity specialists will build a plan around your team.</p></div><form ref={formRef} onSubmit={submit}>{solution && <span className="badge blue" style={{ justifySelf: 'start' }}>{solution}</span>}<label>Work email<input type="email" required placeholder="you@company.com" value={email} onChange={e => setEmail(e.target.value)}/></label><label>Company size<select value={size} onChange={e => setSize(e.target.value)}><option>1–10 employees</option><option>11–50 employees</option><option>51+ employees</option></select></label><Button type="submit" loading={loading}>Request a callback</Button></form></div></section></>
+  return <><PageHero eyebrow="Voice & business" title="Clearer conversations. Smarter business." text="Flexible voice solutions and connected tools that help your team work better, wherever business takes you." icon="building"/><section className="section shell"><SectionHead eyebrow="Solutions that scale" title="Built around your business"/><div className="business-grid">{[['phone', 'Business mobile', 'Flexible team plans with shared data, simple admin and the latest devices.'], ['call', 'Cloud voice (VoIP)', 'A professional phone system in the cloud. Keep every team member connected.'], ['wifi', 'Business internet', 'Priority support and resilient fibre with speeds up to 1 Gbps.']].map(([i, t, d]) => <article key={t}><span><Icon name={i} size={30}/></span><h3>{t}</h3><p>{d}</p><ul><li><Icon name="check" size={16}/> Simple monthly billing</li><li><Icon name="check" size={16}/> Dedicated support</li><li><Icon name="check" size={16}/> Scale anytime</li></ul><Button variant="outline" onClick={() => t.startsWith('Cloud voice') ? go('voip') : pick(t)}>Learn more</Button></article>)}</div></section><section className="business-quote"><div className="shell"><div><span className="eyebrow light">Let's talk business</span><h2>Tell us where you're going.<br/>We'll help you connect the way.</h2><p>Our connectivity specialists will build a plan around your team.</p></div><form ref={formRef} onSubmit={submit}>{solution && <span className="badge blue" style={{ justifySelf: 'start' }}>{solution}</span>}<label>Work email<input type="email" required placeholder="you@company.com" value={email} onChange={e => setEmail(e.target.value)}/></label><label>Company size<select value={size} onChange={e => setSize(e.target.value)}><option>1–10 employees</option><option>11–50 employees</option><option>51+ employees</option></select></label><Button type="submit" loading={loading}>Request a callback</Button></form></div></section></>
 }
 
 // ---------- checkout ----------
 function Checkout({ go }: { go: Go }) {
-  const { cart, phones, plans, toast } = useApp()
+  const { cart, phones, plans, voip, toast } = useApp()
   const [step, setStep] = useState(1)
   const [dir, setDir] = useState<'fwd' | 'back'>('fwd')
   const [details, setDetails] = useState({ firstName: '', lastName: '', email: '', mobile: '' })
@@ -435,13 +453,18 @@ function Checkout({ go }: { go: Go }) {
 
   const item = useMemo(() => {
     const c: CartItem = cart ?? { type: 'phone', slug: 'iphone-16-pro', color: 'Natural Titanium', storage: '256GB', term: 36 }
+    if (c.type === 'voip') {
+      const plan = voip.find(p => p.id === c.planId) ?? voip[0]
+      const num = c.number.type === 'port' ? `Keeping ${c.number.portNumber}` : `New ${c.number.areaCode} number (${voipAreaCodes.find(a => a.code === (c.number as { areaCode: string }).areaCode)?.area ?? ''})`
+      return { cart: c, brand: 'CONNECTRA VOICE · VoIP', name: plan.name, detail: <>{plan.perUser ? `${c.users} user${c.users > 1 ? 's' : ''} · ` : ''}{num}<br/>Month-to-month · Billed per second</>, monthly: plan.price * (plan.perUser ? c.users : 1), upfront: 0, color: '', icon: 'call', back: () => go('voip') }
+    }
     if (c.type === 'internet') {
       const plan = plans.find(p => p.id === c.planId) ?? plans[1]
-      return { cart: c, brand: 'HOME INTERNET', name: plan.name, detail: <>{plan.speed} · Unlimited usage<br/>Wi-Fi 6 router · Free installation</>, monthly: plan.price, upfront: 0, color: '', back: () => go('internet') }
+      return { cart: c, brand: 'HOME INTERNET', name: plan.name, detail: <>{plan.speed} · Unlimited usage<br/>Wi-Fi 6 router · Free installation</>, monthly: plan.price, upfront: 0, color: '', icon: 'wifi', back: () => go('internet') }
     }
     const phone = phones.find(p => p.slug === c.slug) ?? phones[0]
-    return { cart: c, brand: phone.brand.toUpperCase(), name: phone.name, detail: <>{c.color} · {c.storage}<br/>{phone.data} 5G data · {c.term} months</>, monthly: monthlyFor(phone, c.storage, c.term), upfront: phone.upfront, color: phone.colors.find(x => x.name === c.color)?.hex ?? phone.color, back: () => go('product', { slug: phone.slug }) }
-  }, [cart, phones, plans, go])
+    return { cart: c, brand: phone.brand.toUpperCase(), name: phone.name, detail: <>{c.color} · {c.storage}<br/>{phone.data} 5G data · {c.term} months</>, monthly: monthlyFor(phone, c.storage, c.term), upfront: phone.upfront, color: phone.colors.find(x => x.name === c.color)?.hex ?? phone.color, icon: 'phone', back: () => go('product', { slug: phone.slug }) }
+  }, [cart, phones, plans, voip, go])
 
   const move = (to: number) => { setError(''); setDir(to > step ? 'fwd' : 'back'); setStep(to) }
   const next = async () => {
@@ -460,7 +483,9 @@ function Checkout({ go }: { go: Go }) {
     try {
       const c = item.cart
       // Only the last four card digits leave the browser; payment is completed by the gateway.
-      const body = c.type === 'internet'
+      const body = c.type === 'voip'
+        ? { type: 'voip', planId: c.planId, users: c.users, number: c.number, customer: details, payment: { last4: digits.slice(-4) } }
+        : c.type === 'internet'
         ? { type: 'internet', planId: c.planId, customer: details, payment: { last4: digits.slice(-4) } }
         : { type: 'phone', phoneSlug: c.slug, color: c.color, storage: c.storage, term: c.term, customer: details, payment: { last4: digits.slice(-4) } }
       const r = await api.placeOrder(body)
@@ -477,17 +502,17 @@ function Checkout({ go }: { go: Go }) {
   return <main className="checkout-page"><div className="checkout-top shell"><Logo onClick={() => go('home')}/><span>Secure checkout <Icon name="shield" size={17}/></span></div>
     <div className="steps shell" style={{ '--fill': placed ? 1 : (step - 1) / 3 } as CSSProperties}>{['Plan', 'Details', 'ID verification', 'Payment'].map((s, i) => <div className={step >= i + 1 || placed ? 'active' : ''} key={s}><i>{step > i + 1 || placed ? <Icon name="check" size={14}/> : i + 1}</i><span>{s}</span></div>)}</div>
     <div className="checkout-content shell"><section className="checkout-form">
-      {placed ? <div className="step-panel"><div className="success-check"><Icon name="check" size={38}/></div><span className="eyebrow">Order confirmed</span><h1>You're connected, {details.firstName}!</h1><p>Your order reference is <b>{placed.ref}</b>. We've emailed the details to {details.email}. Delivery is free and usually takes 1–2 working days.</p><div className="checkout-nav"><Button variant="ghost" onClick={() => go('home')}>Back to home</Button><Button onClick={() => go('account')}>Go to my account <Icon name="arrow" size={17}/></Button></div></div>
+      {placed ? <div className="step-panel"><div className="success-check"><Icon name="check" size={38}/></div><span className="eyebrow">Order confirmed</span><h1>You're connected, {details.firstName}!</h1><p>Your order reference is <b>{placed.ref}</b>. We've emailed the details to {details.email}. {item.cart.type === 'voip' ? (item.cart.number.type === 'port' ? 'We\'ve started moving your number — it usually takes 3 to 5 working days. Your setup details are on their way.' : 'Your new number and setup details are on their way. Your line will be live within minutes.') : 'Delivery is free and usually takes 1–2 working days.'}</p><div className="checkout-nav"><Button variant="ghost" onClick={() => go('home')}>Back to home</Button><Button onClick={() => go('account')}>Go to my account <Icon name="arrow" size={17}/></Button></div></div>
       : <div className={`step-panel ${dir === 'back' ? 'back' : ''}`} key={step}>
         <span className="eyebrow">Step {step} of 4</span><h1>{['Review your plan', 'Your details', 'Verify your identity', 'Payment details'][step - 1]}</h1><p>{step === 1 ? 'Make sure everything looks right before you continue.' : 'Your information is protected and only used to set up your service.'}</p>
-        {step === 1 ? <div className="cart-item"><div className="cart-phone">{item.color ? <PhoneMock color={item.color} small/> : <Icon name="wifi" size={40}/>}</div><div><span className="muted-label">{item.brand}</span><h3>{item.name}</h3><p>{item.detail}</p><button onClick={item.back}>Edit plan</button></div><b>{zar(item.monthly)}<small>/mo</small></b></div>
+        {step === 1 ? <div className="cart-item"><div className="cart-phone">{item.color ? <PhoneMock color={item.color} small/> : <Icon name={item.icon} size={40}/>}</div><div><span className="muted-label">{item.brand}</span><h3>{item.name}</h3><p>{item.detail}</p><button onClick={item.back}>Edit plan</button></div><b>{zar(item.monthly)}<small>/mo</small></b></div>
         : step === 2 ? <div className="form-grid">{field('firstName', 'First name', { placeholder: 'First name', autoComplete: 'given-name' })}{field('lastName', 'Last name', { placeholder: 'Last name', autoComplete: 'family-name' })}{field('email', 'Email address', { type: 'email', placeholder: 'you@example.com', autoComplete: 'email' }, true)}{field('mobile', 'Mobile number', { type: 'tel', placeholder: '+27 00 000 0000', autoComplete: 'tel' }, true)}</div>
         : step === 3 ? <div className="verify-box"><Icon name={verify === 'done' ? 'check' : 'shield'} size={42}/><h3>{verify === 'done' ? 'Identity verified' : 'Quick and secure verification'}</h3><p>{verify === 'done' ? 'Thanks — you can continue to payment.' : 'Have your ID document ready. This usually takes under two minutes.'}</p>{verify !== 'done' && <Button variant="outline" loading={verify === 'checking'} onClick={runCheck}>Start ID check</Button>}</div>
         : <div className="form-grid"><label className="full">Card number<input inputMode="numeric" autoComplete="cc-number" placeholder="0000 0000 0000 0000" value={card.number} onChange={e => setCard({ ...card, number: e.target.value.replace(/[^\d ]/g, '').slice(0, 23) })}/></label><label>Expiry<input autoComplete="cc-exp" placeholder="MM / YY" value={card.expiry} onChange={e => setCard({ ...card, expiry: e.target.value.slice(0, 7) })}/></label><label>Security code<input inputMode="numeric" autoComplete="cc-csc" placeholder="CVC" value={card.cvc} onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) })}/></label></div>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="checkout-nav"><Button variant="ghost" onClick={() => step > 1 ? move(step - 1) : item.back()}>Back</Button><Button onClick={next} loading={loading}>{step === 4 ? 'Place order' : 'Continue'} <Icon name="arrow" size={17}/></Button></div>
       </div>}
-    </section><aside className="order-summary"><h3>Order summary</h3><div><span>Monthly total</span><b>{zar(item.monthly, true)}</b></div><div><span>Upfront today</span><b>{zar(item.upfront, true)}</b></div><div><span>Delivery</span><b className="success">Free</b></div><hr/><div><span>Due today</span><b>{zar(item.upfront, true)}</b></div><p><Icon name="shield" size={17}/> 14-day return promise</p><p style={{ marginTop: 8 }}>All prices in ZAR, VAT included.</p></aside></div></main>
+    </section><aside className="order-summary"><h3>Order summary</h3><div><span>Monthly total</span><b>{zar(item.monthly, true)}</b></div><div><span>Upfront today</span><b>{zar(item.upfront, true)}</b></div><div><span>{item.cart.type === 'voip' ? 'Activation' : 'Delivery'}</span><b className="success">Free</b></div><hr/><div><span>Due today</span><b>{zar(item.upfront, true)}</b></div><p><Icon name="shield" size={17}/> 14-day return promise</p><p style={{ marginTop: 8 }}>All prices in ZAR, VAT included.</p></aside></div></main>
 }
 
 // ---------- account ----------
@@ -654,6 +679,7 @@ export default function App() {
   routeRef.current = route
   const [phones, setPhones] = useState<Phone[]>(fallbackPhones)
   const [plans, setPlans] = useState<InternetPlan[]>(fallbackPlans)
+  const [voip, setVoip] = useState<VoipPlan[]>(fallbackVoip)
   const [cart, setCartState] = useState<CartItem | null>(() => { try { return JSON.parse(sessionStorage.getItem('connectra.cart') || 'null') } catch { return null } })
   const [toasts, setToasts] = useState<Toast[]>([])
   const [modal, setModal] = useState<'ticket' | 'track' | null>(null)
@@ -662,6 +688,7 @@ export default function App() {
   useEffect(() => {
     api.phones().then(p => p.length && setPhones(p)).catch(() => {})
     api.internetPlans().then(p => p.length && setPlans(p)).catch(() => {})
+    api.voipPlans().then(p => p.length && setVoip(p)).catch(() => {})
   }, [])
 
   const scrollToAnchor = (anchor: string) => document.getElementById(anchor)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
@@ -699,7 +726,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const titles: Record<Page, string> = { home: 'Mobile, Home Internet & Business Voice', phones: 'Mobile Contracts', product: 'Phone details', internet: 'Home Internet', voice: 'Voice & Business', checkout: 'Secure Checkout', account: 'My Account', support: 'Support' }
+    const titles: Record<Page, string> = { home: 'Mobile, Home Internet & Business Voice', phones: 'Mobile Contracts', product: 'Phone details', internet: 'Home Internet', voip: 'VoIP — Voice over Internet', voice: 'Voice & Business', checkout: 'Secure Checkout', account: 'My Account', support: 'Support' }
     const phone = route.page === 'product' ? phones.find(p => p.slug === route.slug) : undefined
     document.title = `Connectra Telecom — ${phone ? phone.name : titles[route.page]}`
   }, [route, phones])
@@ -711,7 +738,7 @@ export default function App() {
   }, [])
   const setCart = useCallback((c: CartItem) => { setCartState(c); try { sessionStorage.setItem('connectra.cart', JSON.stringify(c)) } catch { /* ignore */ } }, [])
 
-  const ctx: Ctx = { route, go, phones, plans, cart, setCart, toast, openModal: setModal }
+  const ctx: Ctx = { route, go, phones, plans, voip, cart, setCart, toast, openModal: setModal }
   const { page } = route
   const standalone = page === 'checkout' || page === 'account'
   return <AppCtx.Provider value={ctx}>
@@ -719,7 +746,7 @@ export default function App() {
     <div className="scroll-progress" aria-hidden="true"/>
     {!standalone && <Header go={go}/>}
     <div className="page-wrap" id="main" tabIndex={-1} key={`${page}/${route.slug ?? ''}`}>
-      {page === 'home' ? <Home go={go}/> : page === 'phones' ? <PhonesPage go={go}/> : page === 'product' ? <ProductPage go={go}/> : page === 'internet' ? <InternetPage go={go}/> : page === 'voice' ? <VoicePage/> : page === 'checkout' ? <Checkout go={go}/> : page === 'account' ? <Account go={go}/> : <Support/>}
+      {page === 'home' ? <Home go={go}/> : page === 'phones' ? <PhonesPage go={go}/> : page === 'product' ? <ProductPage go={go}/> : page === 'internet' ? <InternetPage go={go}/> : page === 'voip' ? <VoipPage/> : page === 'voice' ? <VoicePage/> : page === 'checkout' ? <Checkout go={go}/> : page === 'account' ? <Account go={go}/> : <Support/>}
     </div>
     {!standalone && <Footer go={go}/>}
     {modal === 'ticket' && <TicketModal onClose={() => setModal(null)}/>}

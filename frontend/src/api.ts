@@ -6,6 +6,7 @@ export type Phone = {
   colors: { name: string; hex: string }[]; storage: { size: string; add: number }[]; features: string[]
 }
 export type InternetPlan = { id: string; name: string; speed: string; mbps: number; price: number; note: string; popular?: boolean }
+export type VoipPlan = { id: string; name: string; audience: 'home' | 'business'; price: number; perUser: boolean; popular?: boolean; note: string; includes: string[] }
 export type CoverageResult = { address: string; fibre: boolean; fiveG: boolean; lte: boolean; signal: number; maxSpeedMbps: number; plans: InternetPlan[] }
 export type Article = { id: string; topic: string; title: string; body: string }
 export type User = {
@@ -41,6 +42,7 @@ async function request<T>(path: string, options: { method?: string; body?: unkno
 export const api = {
   phones: () => request<{ phones: Phone[] }>('/phones').then(d => d.phones),
   internetPlans: () => request<{ plans: InternetPlan[] }>('/plans/internet').then(d => d.plans),
+  voipPlans: () => request<{ plans: VoipPlan[] }>('/plans/voip').then(d => d.plans),
   checkCoverage: (address: string) => request<{ result: CoverageResult }>('/coverage/check', { method: 'POST', body: { address } }).then(d => d.result),
   subscribe: (email: string) => request<{ message: string }>('/newsletter', { method: 'POST', body: { email } }),
   requestCallback: (body: { email: string; companySize: string; solution?: string }) => request<{ ref: string; message: string }>('/business/callback', { method: 'POST', body }),

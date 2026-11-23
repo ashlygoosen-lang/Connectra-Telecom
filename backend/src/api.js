@@ -2,7 +2,7 @@ import { Router } from 'express'
 import crypto from 'node:crypto'
 import { db, save } from './db.js'
 import { hashPassword, verifyPassword, issueToken, readToken } from './auth.js'
-import { phones, internetPlans, deals, businessSolutions, faqs, supportTopics, supportArticles } from './catalog.js'
+import { phones, internetPlans, deals, businessSolutions, faqs, supportTopics, supportArticles, voipPlans, voipRates, voipAreaCodes } from './catalog.js'
 
 const api = Router()
 
@@ -68,6 +68,7 @@ api.get('/phones/:slug', (req, res) => {
 })
 
 api.get('/plans/internet', (_req, res) => res.json({ ok: true, plans: internetPlans }))
+api.get('/plans/voip', (_req, res) => res.json({ ok: true, currency: 'ZAR', plans: voipPlans, rates: voipRates, areaCodes: voipAreaCodes }))
 api.get('/deals', (_req, res) => res.json({ ok: true, deals }))
 api.get('/business/solutions', (_req, res) => res.json({ ok: true, solutions: businessSolutions }))
 api.get('/faqs', (_req, res) => res.json({ ok: true, faqs }))
@@ -138,7 +139,24 @@ api.post('/orders', limit(10), (req, res) => {
   if (!/^\d{4}$/.test(last4)) return bad(res, 'Payment details are incomplete.')
 
   let item
-  if (b.type === 'internet') {
+  if (b.type === 'voip') {
+    const plan = voipPlans.find(p => p.id === b.planId)
+    if (!plan) return bad(res, 'Unknown VoIP plan.')
+    const users = plan.perUser ? Math.round(Number(b.users)) : 1
+    if (!Number.isFinite(users) || users < 1 || users > 500) return bad(res, 'Choose between 1 and 500 users.')
+    const n = b.number || {}
+    let numberDetail
+    if (n.type === 'port') {
+      const digits = String(n.portNumber || '').replace(/\D/g, '')
+      if (!/^0\d{9}$/.test(digits)) return bad(res, 'Enter the 10-digit landline number you want to keep, e.g. 021 555 0194.')
+      numberDetail = `Porting ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+    } else {
+      const area = voipAreaCodes.find(a => a.code === n.areaCode)
+      if (!area) return bad(res, 'Choose an area code for your new number.')
+      numberDetail = `New ${area.code} number (${area.area})`
+    }
+    item = { type: 'voip', planId: plan.id, name: plan.name, detail: `${plan.perUser ? `${users} user${users > 1 ? 's' : ''} · ` : ''}${numberDetail} · Month-to-month`, users, number: n.type === 'port' ? 'port' : 'new', monthly: plan.price * users, upfront: 0 }
+  } else if (b.type === 'internet') {
     const plan = internetPlans.find(p => p.id === b.planId)
     if (!plan) return bad(res, 'Unknown internet plan.')
     item = { type: 'internet', planId: plan.id, name: plan.name, detail: `${plan.speed} · Unlimited · Month-to-month`, monthly: plan.price, upfront: 0 }

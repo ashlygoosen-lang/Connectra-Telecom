@@ -1,5 +1,7 @@
 # Connectra Telecom — Website
 
+Connectra Telecom is a division of **VINK Group (Pty) Ltd**, registration number 2018/079316/07 (head office: Cape Town). The footer carries this statement on every page.
+
 React 19 + Vite + Tailwind v4 frontend (from the Figma Make export) with a Node/Express backend. In production both run as **one service**: Express serves the API under `/api` and the built frontend.
 
 ```
@@ -34,11 +36,12 @@ Demo account: `demo@connectra.africa` / `Connectra2026!` (set `SEED_DEMO=false` 
 |---|---|---|
 | GET | `/api/health` | Health check |
 | GET | `/api/phones`, `/api/phones/:slug` | Phone catalogue (filters: `brand`, `maxPrice`, `sort=price`) |
+| GET | `/api/plans/voip` | VoIP plans (Voice Flex R29, Home Unlimited R199, Cloud PBX R149/user), call rates, area codes |
 | GET | `/api/plans/internet`, `/api/deals`, `/api/business/solutions`, `/api/faqs`, `/api/stats` | Content |
 | POST | `/api/coverage/check` | `{ address }` → fibre / 5G / LTE availability |
 | POST | `/api/newsletter` | `{ email }` |
 | POST | `/api/business/callback` | `{ email, companySize, solution }` |
-| POST | `/api/orders` | Phone or internet order. Prices are calculated server-side. Only the card's last 4 digits are accepted. |
+| POST | `/api/orders` | Phone, internet or VoIP order (`type: "voip"`, `planId`, `users`, `number: { type: "new", areaCode } \| { type: "port", portNumber }`). Prices are calculated server-side. Only the card's last 4 digits are accepted. |
 | GET | `/api/orders/:ref?email=` | Order tracking |
 | POST | `/api/auth/register`, `/api/auth/login` | Returns a bearer token |
 | GET | `/api/account/me` | Profile, usage, bill, orders (auth) |
@@ -52,6 +55,10 @@ Write endpoints are rate-limited per IP. Data is stored in a JSON file (`DATA_DI
 **Currency:** all prices and payments are South African Rand (ZAR), VAT inclusive, formatted the South African way (R1 099 / R1 099,00). Orders store `currency: "ZAR"`.
 
 **Still to connect for production:** a South African payment gateway such as PayFast, Yoco, Peach Payments or Paystack, charging in ZAR (orders are saved as `pending-gateway`), a real ID-verification provider (the checkout step is simulated), a network coverage API (results are currently deterministic per address), and transactional email.
+
+## Connectra Voice (VoIP) — `frontend/src/voip.tsx`
+
+Dedicated `#/voip` page: plans for home and business, a line configurator (new number by area code or keep an existing number, users for Cloud PBX), a call-cost estimator comparing Voice Flex and Home Unlimited, per-second call-rate table, Cloud PBX features with a quote form, and a VoIP FAQ. VoIP also appears in the main navigation and dropdown, as a home-page band, on the Business page and in support topics. Call rates (35c landline / 45c mobile / from 49c international) are placeholders to confirm.
 
 ## Interactive showcase (`frontend/src/showcase.tsx`)
 

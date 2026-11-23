@@ -1,4 +1,4 @@
-import type { Phone, InternetPlan } from './api'
+import type { Phone, InternetPlan, VoipPlan } from './api'
 
 // Built-in copy of the catalogue so pages render instantly (and for crawlers);
 // it is refreshed from the API on load.
@@ -31,4 +31,26 @@ export const supportTopics = [
   { id: 'account', icon: 'user', title: 'Account & app', text: 'Manage your details and plan' },
   { id: 'security', icon: 'shield', title: 'Safety & security', text: 'Keep your account protected' },
   { id: 'orders', icon: 'help', title: 'Orders & delivery', text: 'Track or change an order' },
+  { id: 'voip', icon: 'call', title: 'VoIP & landline', text: 'Set up calls over the internet' },
+]
+
+export const fallbackVoip: VoipPlan[] = [
+  { id: 'voip-flex', name: 'Voice Flex', audience: 'home', price: 29, perUser: false, note: 'Pay only for the calls you make', includes: ['Free landline number (new or ported)', 'Landlines 35c/min, mobiles 45c/min', 'Free calls to other Connectra numbers', 'Voicemail to email', 'Per-second billing'] },
+  { id: 'voip-home', name: 'Home Unlimited', audience: 'home', price: 199, perUser: false, popular: true, note: 'Unlimited local calling for the household', includes: ['Unlimited calls to SA landlines', '500 minutes to SA mobiles', 'Free calls to other Connectra numbers', 'Use your existing phone or our app', 'Voicemail to email'] },
+  { id: 'voip-business', name: 'Cloud PBX', audience: 'business', price: 149, perUser: true, note: 'A full business phone system in the cloud', includes: ['Extension per user + free internal calls', '250 local minutes per user', 'Auto attendant (IVR) and hunt groups', 'Call recording and reporting', 'Desk phone, desktop and mobile apps'] },
+]
+
+export const voipRates = { landline: 0.35, mobile: 0.45, internationalFrom: 0.49, internationalAvg: 0.89 }
+
+export const voipAreaCodes = [
+  { code: '021', area: 'Cape Town' }, { code: '011', area: 'Johannesburg' }, { code: '012', area: 'Pretoria' },
+  { code: '031', area: 'Durban' }, { code: '041', area: 'Gqeberha' }, { code: '051', area: 'Bloemfontein' }, { code: '087', area: 'National (any area)' },
+]
+
+export const voipFaqs: [string, string][] = [
+  ['What is VoIP?', 'Voice over Internet Protocol sends your calls over your internet connection instead of a copper line. You get a real landline number that works on a normal phone (with an adapter), a desk phone, or the Connectra Voice app.'],
+  ['Can I keep my existing landline number?', 'Yes. Choose "Keep my number" when you order and we handle the move with your current provider. It usually takes 3 to 5 working days, and your old line keeps working until the move is complete.'],
+  ['Does VoIP work during load-shedding?', 'VoIP needs power and internet. If your router, fibre box and adapter are on a UPS, your calls keep working during load-shedding. The app also works on mobile data.'],
+  ['What internet speed do I need?', 'About 100 kbps per call, so any fibre, LTE or 5G connection is enough. For the best quality, keep your phone or adapter on a wired connection or 5GHz Wi-Fi.'],
+  ['Can I call emergency numbers?', 'VoIP depends on power and internet, so we recommend always keeping a mobile phone available to call 112 or 10111 in an emergency.'],
 ]

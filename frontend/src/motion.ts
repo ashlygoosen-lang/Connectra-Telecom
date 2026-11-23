@@ -11,7 +11,8 @@ const REVEAL = [
   '.availability .shell > *', '.filters', '.listing-top', '.dashboard-grid > article', '.account-welcome',
   '.newsletter > *', '.footer-grid > div', '.footer-bottom', '.detail-info > *', '.gallery', '.order-list',
   '.page-hero .shell > *', '.support-hero .shell > *', '.article-results', '.auth-card',
-  '.sf-controls > *', '.sf-result', '.footer-wordmark',
+  '.sf-controls > *', '.sf-result', '.footer-wordmark', '.voip-perks article', '.voip-how li', '.voip-rates > *',
+  '.vb-copy > *', '.vb-form', '.voip-band', '.footer-division',
 ].join(',')
 
 export const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches

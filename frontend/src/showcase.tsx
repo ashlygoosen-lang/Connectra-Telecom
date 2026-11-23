@@ -1,7 +1,7 @@
 // Premium interactive pieces: South Africa network map, home-internet speed finder, desktop mega menu.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import type { InternetPlan, Phone } from './api'
+import type { InternetPlan, Phone, VoipPlan } from './api'
 import { saMap } from './saMap'
 import { Icon, PhoneMock } from './App'
 
@@ -128,9 +128,9 @@ export function SpeedFinder({ plans, onChoose }: { plans: InternetPlan[]; onChoo
 // ---------------------------------------------------------------------------
 // Mega menu — desktop navigation panel for phones and home internet.
 // ---------------------------------------------------------------------------
-type MegaProps = { open: 'phones' | 'internet' | null; phones: Phone[]; plans: InternetPlan[]; onEnter: () => void; onLeave: () => void; go: (page: string, slug?: string) => void }
+type MegaProps = { open: 'phones' | 'internet' | 'voip' | null; phones: Phone[]; plans: InternetPlan[]; voip: VoipPlan[]; onEnter: () => void; onLeave: () => void; go: (page: string, slug?: string) => void }
 
-export function MegaMenu({ open, phones, plans, onEnter, onLeave, go }: MegaProps) {
+export function MegaMenu({ open, phones, plans, voip, onEnter, onLeave, go }: MegaProps) {
   const [shown, setShown] = useState(open)
   useEffect(() => { if (open) setShown(open) }, [open])
   return <div className={`mega ${open ? 'open' : ''}`} onMouseEnter={onEnter} onMouseLeave={onLeave} aria-hidden={!open} inert={!open}>
@@ -164,6 +164,23 @@ export function MegaMenu({ open, phones, plans, onEnter, onLeave, go }: MegaProp
           </button>)}
         </div>
         <div className="mega-promo"><span className="badge cyan">FREE ROUTER</span><h4>Wi-Fi 6 included.</h4><p>Free installation and unlimited usage on every fibre plan.</p><button className="btn btn-primary" onClick={() => go('internet')}>Check my address</button></div>
+      </>}
+      {shown === 'voip' && <>
+        <div className="mega-col">
+          <span className="eyebrow">Connectra Voice</span>
+          <button onClick={() => go('voip')}>VoIP for home<Icon name="arrow" size={16}/></button>
+          <button onClick={() => go('voip')}>Cloud PBX for business<Icon name="arrow" size={16}/></button>
+          <button onClick={() => go('voip')}>Keep your number<Icon name="arrow" size={16}/></button>
+          <button onClick={() => go('voip')}>Call rates<Icon name="arrow" size={16}/></button>
+          <button className="mega-all" onClick={() => go('voip')}>All VoIP plans <Icon name="arrow" size={16}/></button>
+        </div>
+        <div className="mega-cards">{voip.map(p =>
+          <button key={p.id} className={`mega-plan ${p.popular ? 'hot' : ''}`} onClick={() => go('voip')}>
+            {p.popular && <span className="badge blue">Most popular</span>}
+            <Icon name={p.audience === 'business' ? 'building' : 'call'} size={26}/><b>{p.name}</b><small>{p.note}</small><span>{zar(p.price)}<em>/{p.perUser ? 'user/mo' : 'month'}</em></span>
+          </button>)}
+        </div>
+        <div className="mega-promo"><span className="badge cyan">NEW</span><h4>Keep your landline number.</h4><p>Move it to Connectra free and pay <b>35c/min</b> to SA landlines.</p><button className="btn btn-primary" onClick={() => go('voip')}>Explore VoIP</button></div>
       </>}
     </div>
   </div>
